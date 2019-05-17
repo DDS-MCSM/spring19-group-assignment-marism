@@ -10,7 +10,10 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports:
-    R.utils
+    R.utils,
+    iptools,
+    parallel,
+    dplyr
 Suggests: 
     knitr
 RoxygenNote: 6.1.1
