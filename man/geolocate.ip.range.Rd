@@ -15,13 +15,10 @@ geolocate.ip.range(df.maxmind, df.scans)
 df.scans
 }
 \description{
-Función que permite optimizar al maximo la capacidad de procesado del ordenador,
-enviando procesos por cada uno de los cores que tiene disponible el ordenador exceptuando de uno
-que lo deja para procesos propios de la maquina.
+Función que permite optimizar al maximo la capacidad de procesado del ordenador, enviando procesos por cada uno de los cores que tiene disponible el ordenador exceptuando de uno que lo deja para procesos propios de la maquina.
 }
 \details{
-Por cada IP, miramos a que rango de IP pertenece, ya en el df.maxmind, fichero que nos
-indica la geolocalizacion, nos lo especifican los rangos de IP con mnascaras de red equivalente. Nos retorna el df
+Por cada IP, miramos a que rango de IP pertenece, ya en el df.maxmind, fichero que nos indica la geolocalizacion, nos lo especifican los rangos de IP con mnascaras de red equivalente. Nos retorna el df
 }
 \examples{
 geolocate.ip.range(df.maxmind, df.scans)

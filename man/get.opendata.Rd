@@ -4,14 +4,18 @@
 \alias{get.opendata}
 \title{Obtención fichero opendata}
 \usage{
-get.opendata()
+get.opendata(opendata.url = NULL, verbose)
+}
+\arguments{
+\item{opendata.url}{Lugar donde iremos a buscar los datos (opcional)}
+
+\item{verbose}{Mostrar comentarios}
 }
 \value{
 df.tcp21
 }
 \description{
-Función que se conecta a la web de rapit7 que lleva implicita, y se descarga un fichero en formato gz, el cual posteriormente
-lo descomprime y nos lo retorna en formato csv, borrando el fichero comprimido. En esta funcion se utlizan otras funciones ya descritas con anterioridad, por ejemplo download.data
+Función que se conecta a la web de rapid7 que lleva implicita, y se descarga un fichero en formato gz, el cual posteriormente lo descomprime y nos lo retorna en formato csv, borrando el fichero comprimido. En esta funcion se utlizan otras funciones ya descritas con anterioridad, por ejemplo download.data
 }
 \details{
 Funcion que nos retorna un fichero con las IP que tienen abierto el puerto TCP

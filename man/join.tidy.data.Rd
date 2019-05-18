@@ -15,8 +15,7 @@ join.tidy.data(df.maxmind, df.scans)
 df
 }
 \description{
-Función que nos une los dos data frame, para optener los resultados que queremos obtener
-La geolocalización a nivel de ciudad de las IP identifcadas con vulnerabilidad.
+Función que nos une los dos data frame, para optener los resultados que queremos obtener la geolocalización a nivel de ciudad de las IP identifcadas con vulnerabilidad.
 }
 \details{
 Dados dos df de entrada, retorna uno con los resultados que queremos mostrar

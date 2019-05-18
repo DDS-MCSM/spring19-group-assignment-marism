@@ -4,15 +4,16 @@
 \alias{get.maxmind}
 \title{Obtención del fichero maxmid}
 \usage{
-get.maxmind()
+get.maxmind(verbose)
+}
+\arguments{
+\item{verbose}{Mostrar comentarios}
 }
 \value{
 df.maxmind
 }
 \description{
-Función que se conecta a la web de geolite.maxmind que lleva implicita, y se descarga un fichero .zip,
-de la lista de ficheros unicamente se queda con el que cumple la expresion regular *GeoLite2-City-Blocks-IPv4.csv
-lo descomprime y nos lo retona como csv
+Función que se conecta a la web de geolite.maxmind que lleva implicita, y se descarga un fichero .zip, de la lista de ficheros unicamente se queda con el que cumple la expresion regular *GeoLite2-City-Blocks-IPv4.csv lo descomprime y nos lo retona como csv
 }
 \details{
 Funcion que nos retorna un fichero con la geolicalizacion de IPV4 por ciudad

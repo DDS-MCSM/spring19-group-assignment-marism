@@ -22,5 +22,5 @@ como parametro
 Necesitas pasarle un df y un valor numerico
 }
 \examples{
-function(df, 1)
+generate.df(df, 50)
 }

@@ -4,12 +4,16 @@
 \alias{codebook}
 \title{Funcion general}
 \usage{
-codebook(url, sample, output.name)
+codebook(url, sample, output.name, verbose = FALSE)
 }
 \arguments{
+\item{url}{Url de opendata.rapid7.com con el fichero a evaluar}
+
 \item{sample}{Numero de muestras.}
 
 \item{output.name}{Nombre del fichero de salida donde guardaremos los datos.}
+
+\item{verbose}{Mostrar comentarios}
 }
 \value{
 Generates output.name RDS file
@@ -19,5 +23,5 @@ Función que ejecuta ordenadamente todas las funciones decladaras, y simula el c
 del codigo facilitado en la práctica.
 }
 \examples{
-codebook(sample, output.name)
+codebook("https://opendata.rapid7.com/sonar.tcp/2019-04-21-1555815947-http_get_5555.csv.gz", 500, "output.rds", TRUE)
 }

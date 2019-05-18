@@ -4,9 +4,11 @@
 \alias{syso}
 \title{Imprirmir por consola}
 \usage{
-syso(x)
+syso(verbose, x)
 }
 \arguments{
+\item{verbose}{Mostrar comentarios}
+
 \item{x}{Texto que queremos imprimir}
 }
 \description{
@@ -16,5 +18,5 @@ Funcion que imprime por pantalla, simpre y cuando este habilitada a true la vari
 No se le pasa ningun valor a la función ya que dejamos como predefinido "data" por defecto, sin capacidad de ser alterado.
 }
 \examples{
-syso("Hello World!!")
+syso(TRUE, "Hello World!!")
 }

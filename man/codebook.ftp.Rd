@@ -10,8 +10,7 @@ codebook.ftp()
 Generates "geoftps.rds" RDS file
 }
 \description{
-Función que inicializa una serie de valirables para simular el comportamiento definido en
-el codigo facilitado en la práctica.
+Función que inicializa una serie de variables para simular el comportamiento definido en el codigo facilitado en la práctica.
 }
 \details{
 Dato unas variables llamamos a lo que sería el equivalente a nuestro main, el corzando del progrma
