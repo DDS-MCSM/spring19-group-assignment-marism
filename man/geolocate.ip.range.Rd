@@ -2,16 +2,27 @@
 % Please edit documentation in R/code.R
 \name{geolocate.ip.range}
 \alias{geolocate.ip.range}
-\title{Title}
+\title{Identificacion del rango de la IP utlizando threads paralelos}
 \usage{
 geolocate.ip.range(df.maxmind, df.scans)
 }
 \arguments{
-\item{df.scans}{}
+\item{df.maxmind}{Data frame de maxmind}
+
+\item{df.scans}{Data frame de scans}
 }
 \value{
-
+df.scans
 }
 \description{
-Title
+Función que permite optimizar al maximo la capacidad de procesado del ordenador,
+enviando procesos por cada uno de los cores que tiene disponible el ordenador exceptuando de uno
+que lo deja para procesos propios de la maquina.
+}
+\details{
+Por cada IP, miramos a que rango de IP pertenece, ya en el df.maxmind, fichero que nos
+indica la geolocalizacion, nos lo especifican los rangos de IP con mnascaras de red equivalente. Nos retorna el df
+}
+\examples{
+geolocate.ip.range(df.maxmind, df.scans)
 }

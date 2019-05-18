@@ -2,13 +2,25 @@
 % Please edit documentation in R/code.R
 \name{add.numeric.ip}
 \alias{add.numeric.ip}
-\title{Title}
+\title{Función para convertir las IP en numeros}
 \usage{
 add.numeric.ip(df, ip.col)
 }
 \arguments{
-\item{ip.col}{}
+\item{df}{Fichero que contiene los data frame}
+
+\item{ip.col}{Columna donde estan las IP}
+}
+\value{
+df
 }
 \description{
-Title
+Dada una IP te la convierte a numero quitando los espacios.
+}
+\details{
+Le pasas el datframe y la columna donde se encuentran las IP
+y el te retorna el mismo data frame convertiendo las IP en nuemeros
+}
+\examples{
+add.numeric.ip(df, ip.col)
 }

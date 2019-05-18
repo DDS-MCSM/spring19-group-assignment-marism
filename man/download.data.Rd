@@ -2,17 +2,23 @@
 % Please edit documentation in R/code.R
 \name{download.data}
 \alias{download.data}
-\title{Download file}
+\title{Descarga de fichero de internet}
 \usage{
 download.data(url, destfile)
 }
 \arguments{
-\item{destination.file}{}
+\item{url}{Lugar donde iremos a buscar los datos}
+
+\item{destfile}{Nombre del archivo de destino con el que guardaremos los datos}
 }
 \description{
-Download file
+Función que descarga un fichero de una url y lo guarda con el nombre del fichero que indiquemos.
 }
 \details{
-Download file from 'download.url' and save it as 'destination.file' in dir.data
-Path is relative to working directory
+Descarga de la '$url' y lo guarda con el nombre de '$destfile', internamente hace una llamada a 'create.dir.data()',
+para asegurarnos que el directorio de trabajo data existe, por otro lado valida que el nombre del fichero ya no este en el repositorio
+de trabajo y solo en ese caso se lo descarga.
+}
+\examples{
+download.data(url, destfile)
 }

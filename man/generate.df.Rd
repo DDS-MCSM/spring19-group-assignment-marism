@@ -2,13 +2,25 @@
 % Please edit documentation in R/code.R
 \name{generate.df}
 \alias{generate.df}
-\title{Title}
+\title{Funció para obtener las n primeras muestras de un data frame}
 \usage{
 generate.df(df, nrows)
 }
 \arguments{
-\item{nrows}{}
+\item{df}{Fichero que contiene el data frame}
+
+\item{nrows}{Numero de muestras que queremos tratar}
+}
+\value{
+partial.df
 }
 \description{
-Title
+Función a la que le pasas un data frame con muchos datos y te retorna las n linias que le pases
+como parametro
+}
+\details{
+Necesitas pasarle un df y un valor numerico
+}
+\examples{
+function(df, 1)
 }

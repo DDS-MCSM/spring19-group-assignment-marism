@@ -2,16 +2,22 @@
 % Please edit documentation in R/code.R
 \name{codebook}
 \alias{codebook}
-\title{Title}
+\title{Funcion general}
 \usage{
 codebook(url, sample, output.name)
 }
 \arguments{
-\item{output.name}{}
+\item{sample}{Numero de muestras.}
+
+\item{output.name}{Nombre del fichero de salida donde guardaremos los datos.}
 }
 \value{
 Generates output.name RDS file
 }
 \description{
-Title
+Función que ejecuta ordenadamente todas las funciones decladaras, y simula el comportamiento
+del codigo facilitado en la práctica.
+}
+\examples{
+codebook(sample, output.name)
 }

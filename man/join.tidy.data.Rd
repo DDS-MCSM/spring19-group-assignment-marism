@@ -2,16 +2,25 @@
 % Please edit documentation in R/code.R
 \name{join.tidy.data}
 \alias{join.tidy.data}
-\title{Title}
+\title{Unió de resultados}
 \usage{
 join.tidy.data(df.maxmind, df.scans)
 }
 \arguments{
-\item{df.scans}{}
+\item{df.maxmind}{Data frame de maxmind}
+
+\item{df.scans}{Data frame de scans}
 }
 \value{
-
+df
 }
 \description{
-Title
+Función que nos une los dos data frame, para optener los resultados que queremos obtener
+La geolocalización a nivel de ciudad de las IP identifcadas con vulnerabilidad.
+}
+\details{
+Dados dos df de entrada, retorna uno con los resultados que queremos mostrar
+}
+\examples{
+join.tidy.data(df.maxmind, df.scans)
 }

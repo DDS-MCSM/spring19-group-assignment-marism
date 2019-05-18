@@ -2,7 +2,7 @@
 % Please edit documentation in R/code.R
 \name{codebook.ftp}
 \alias{codebook.ftp}
-\title{CodeBook session2.}
+\title{Ejecución de CodeBook}
 \usage{
 codebook.ftp()
 }
@@ -10,5 +10,12 @@ codebook.ftp()
 Generates "geoftps.rds" RDS file
 }
 \description{
-CodeBook session2.
+Función que inicializa una serie de valirables para simular el comportamiento definido en
+el codigo facilitado en la práctica.
+}
+\details{
+Dato unas variables llamamos a lo que sería el equivalente a nuestro main, el corzando del progrma
+}
+\examples{
+codebook.ftp()
 }

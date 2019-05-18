@@ -2,16 +2,20 @@
 % Please edit documentation in R/code.R
 \name{get.opendata}
 \alias{get.opendata}
-\title{Title}
+\title{Obtención fichero opendata}
 \usage{
-get.opendata(opendata.url = NULL)
-}
-\arguments{
-\item{url}{}
+get.opendata()
 }
 \value{
 df.tcp21
 }
 \description{
-Title
+Función que se conecta a la web de rapit7 que lleva implicita, y se descarga un fichero en formato gz, el cual posteriormente
+lo descomprime y nos lo retorna en formato csv, borrando el fichero comprimido. En esta funcion se utlizan otras funciones ya descritas con anterioridad, por ejemplo download.data
+}
+\details{
+Funcion que nos retorna un fichero con las IP que tienen abierto el puerto TCP
+}
+\examples{
+get.opendata()
 }
