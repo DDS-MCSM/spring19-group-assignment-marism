@@ -19,9 +19,12 @@ codebook(url, sample, output.name, verbose = FALSE)
 Generates output.name RDS file
 }
 \description{
-Función que ejecuta ordenadamente todas las funciones decladaras, y simula el comportamiento
-del codigo facilitado en la práctica.
+Función que ejecuta ordenadamente todas las funciones decladaras, y simula el comportamiento del codigo facilitado en la práctica. Utiliza los datos de maxmind para geolocalizar IPs, pero a parte del archivo con datos sobre conexiones tcp21, también acepta cualquier archivo de https://opendata.rapid7.com/sonar.tcp
 }
 \examples{
-codebook("https://opendata.rapid7.com/sonar.tcp/2019-04-21-1555815947-http_get_5555.csv.gz", 500, "output.rds", TRUE)
+url <- "https://opendata.rapid7.com/sonar.tcp/2019-04-21-1555815947-http_get_5555.csv.gz"
+sample <- 500
+output.name <- "output.rds"
+verbose <- TRUE
+codebook(url, sample, output.name, verbose)
 }

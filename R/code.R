@@ -69,6 +69,7 @@ get.opendata <- function(opendata.url = NULL, verbose) {
     download.data(url = opendata.url, destfile = opendata.file.gz, verbose)
     R.utils::gunzip(file.path(getwd(), "data", opendata.file.gz))
   }
+  syso(verbose, "El fichero ya existe")
   df.tcp <- read.csv(file.path(getwd(), "data", opendata.file), stringsAsFactors = FALSE)
   return(df.tcp)
 }
@@ -180,8 +181,7 @@ join.tidy.data <- function(df.maxmind, df.scans) {
 }
 
 #' @title Funcion general
-#' @description Función que ejecuta ordenadamente todas las funciones decladaras, y simula el comportamiento
-#' del codigo facilitado en la práctica.
+#' @description Función que ejecuta ordenadamente todas las funciones decladaras, y simula el comportamiento del codigo facilitado en la práctica. Utiliza los datos de maxmind para geolocalizar IPs, pero a parte del archivo con datos sobre conexiones tcp21, también acepta cualquier archivo de https://opendata.rapid7.com/sonar.tcp
 #' @param url Url de opendata.rapid7.com con el fichero a evaluar
 #' @param sample Numero de muestras.
 #' @param output.name Nombre del fichero de salida donde guardaremos los datos.
@@ -189,7 +189,11 @@ join.tidy.data <- function(df.maxmind, df.scans) {
 #' @return Generates output.name RDS file
 #' @export
 #' @examples
-#' codebook("https://opendata.rapid7.com/sonar.tcp/2019-04-21-1555815947-http_get_5555.csv.gz", 500, "output.rds", TRUE)
+#' url <- "https://opendata.rapid7.com/sonar.tcp/2019-04-21-1555815947-http_get_5555.csv.gz"
+#' sample <- 500
+#' output.name <- "output.rds"
+#' verbose <- TRUE
+#' codebook(url, sample, output.name, verbose)
 codebook <- function(url, sample, output.name, verbose = FALSE) {
 
   syso(verbose, "Inicio de la ejecución....")
@@ -210,7 +214,7 @@ codebook <- function(url, sample, output.name, verbose = FALSE) {
   df.tcp.sample <- generate.df(df.tcp, sample)
 
   # Expanding MaxMind network ranges
-  syso(verbose, "Tramiento de los resultados....")
+  syso(verbose, "Tratamiento de los resultados...")
   df.maxmind <- cbind(df.maxmind, iptools::range_boundaries(df.maxmind$network))
   df.maxmind$rowname <- as.integer(row.names(df.maxmind))
 
@@ -225,7 +229,7 @@ codebook <- function(url, sample, output.name, verbose = FALSE) {
   df$is_anonymous_proxy <- as.factor(df$is_anonymous_proxy)
   df$is_satellite_provider <- as.factor(df$is_satellite_provider)
   saveRDS(object = df, file = file.path(getwd(), "data", output.name))
-  #syso(c("Los resuldos los podra ver en la carpeta data ",file))
+  syso(verbose, paste("Los resuldos se pueden ver en", file.path(getwd(), "data", output.name)))
 }
 
 #' @title Ejecución de CodeBook
