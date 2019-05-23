@@ -44,15 +44,14 @@ download.data <- function(url, destfile, verbose) {
   }
 }
 
-#' @title Obtención fichero opendata
-#' @description Función que se conecta a la web de rapid7 que lleva implicita, y se descarga un fichero en formato gz, el cual posteriormente lo descomprime y nos lo retorna en formato csv, borrando el fichero comprimido. En esta funcion se utlizan otras funciones ya descritas con anterioridad, por ejemplo download.data
-#' @details Funcion que nos retorna un fichero con las IP que tienen abierto el puerto TCP
-#' @param opendata.url Lugar donde iremos a buscar los datos (opcional)
-#' @param verbose Mostrar comentarios
-#' @return df.tcp21
+#' @title Get opendata csv or json file from rapid7.com and convert it into dataframe object.
+#' @description This function downloads a compressed '.gz' file from opendata.rapid7.com website, and imports file from csv or json into dataframe object.
+#' @param opendata.url Any url of https://opendata.rapid7.com
+#' @param verbose Print logs
+#' @return dataframe
 #' @export
 #' @examples
-#' get.opendata()
+#' get.opendata(url, verbose)
 get.opendata <- function(opendata.url = NULL, verbose) {
   # Obtain raw data from opendata.rapid7.com website
   if (is.null(opendata.url)) { # Default file
@@ -65,13 +64,26 @@ get.opendata <- function(opendata.url = NULL, verbose) {
   opendata.file.gz <- tail(strsplit(opendata.url, '/')[[1]], 1)
   # remove '.gz' extension name
   opendata.file <- substr(opendata.file.gz, 1, nchar(opendata.file.gz) - 3)
+  # Get file format
+  file.format <- substr(opendata.file, nchar(opendata.file) - 3, nchar(opendata.file))
+  # Download and extract
   if (!file.exists(file.path(getwd(), "data", opendata.file))) {
     download.data(url = opendata.url, destfile = opendata.file.gz, verbose)
     R.utils::gunzip(file.path(getwd(), "data", opendata.file.gz))
+  } else {
+    syso(verbose, paste("File", opendata.file, "already exists. No need to download."))
   }
-  syso(verbose, "El fichero ya existe")
-  df.tcp <- read.csv(file.path(getwd(), "data", opendata.file), stringsAsFactors = FALSE)
-  return(df.tcp)
+  if (file.format == ".csv") {
+    df <- read.csv(file.path(getwd(), "data", opendata.file), stringsAsFactors = FALSE)
+    syso(verbose, paste(opendata.file, "imported."))
+  } else if (file.format == "json") {
+    lines <- readLines(file.path(getwd(), "data", opendata.file))
+    df <- data.frame(do.call(rbind, lapply(lines, jsonlite::fromJSON)))
+    syso(verbose, paste(opendata.file, "imported."))
+  } else {
+    syso(verbose, paste("Format error (", file.format, ")"))
+  }
+  return(df)
 }
 
 #' @title Obtención del fichero maxmid

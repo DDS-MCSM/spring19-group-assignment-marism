@@ -13,7 +13,8 @@ Imports:
     R.utils,
     iptools,
     parallel,
-    dplyr
+    dplyr,
+    jsonlite
 Suggests: 
     knitr
 RoxygenNote: 6.1.1
