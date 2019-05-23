@@ -192,6 +192,40 @@ join.tidy.data <- function(df.maxmind, df.scans) {
   return(df)
 }
 
+
+parse.headers <- function() {
+
+  df.raw <- readRDS(file.path(getwd(), "data", "df_http_get_80_raw_50.rds"))
+
+  # Column data is actually in base64
+  colnames(df.raw)[which(names(df.raw) == "data")] <- "datab64"
+  # Convert datab64 to data
+  df.raw$data <- sapply(df.raw$datab64, function(d) jsonlite::base64_dec(d))
+  # Delete NULL chars
+  df.raw$data <- sapply(df.raw$data, function(d) d[!d == '00'])
+  # raw to char
+  df.raw$data <- sapply(df.raw$data, function(d) rawToChar(d))
+
+  # Get Response Headers
+  df.raw$headers <- sapply(df.raw$data, function(d) head(unlist(strsplit(d, '\r\n\r\n', useBytes = TRUE)[[1]], 1)))
+  # Get Response Content
+  #df$body <- sapply(df$data, function(d) tail(strsplit(d, '\r\n\r\n', useBytes = TRUE)[[1]], -1))
+
+  # Convert headers into vector of lines
+  df.raw$headers <- sapply(df.raw$headers, function(d) strsplit(d, '\r\n', useBytes = TRUE))
+
+  # Fist line: version and status
+  df.raw$status <- sapply(df.raw$headers, function(d) d[[1]][1])
+  df.raw$status <- enc2utf8(df.raw$status)
+  df.raw$version <- sapply(df.raw$status, function(d) substr(d, 1, 8))
+
+
+  # Delete first line (http version and status) of headers
+  df.raw$headers <- sapply(df.raw$headers, function(d) tail(d, length(d) - 1))
+
+}
+
+
 #' @title Funcion general
 #' @description Función que ejecuta ordenadamente todas las funciones decladaras, y simula el comportamiento del codigo facilitado en la práctica. Utiliza los datos de maxmind para geolocalizar IPs, pero a parte del archivo con datos sobre conexiones tcp21, también acepta cualquier archivo de https://opendata.rapid7.com/sonar.tcp
 #' @param url Url de opendata.rapid7.com con el fichero a evaluar
