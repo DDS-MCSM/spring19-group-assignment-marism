@@ -193,36 +193,65 @@ join.tidy.data <- function(df.maxmind, df.scans) {
 }
 
 
-parse.headers <- function() {
+#' Title
+#'
+#' @param port
+#' @param rows
+#' @param verbose
+#'
+#' @return
+#' @export
+#'
+#' @examples
+parse.headers <- function(port=80, rows=50, verbose=TRUE) {
 
-  df.raw <- readRDS(file.path(getwd(), "data", "df_http_get_80_raw_50.rds"))
+  # Example of rds file generation:
+  # user@linux$ head -n 50  2019-04-22-1555944117-http_get_80.json > sample80_50.json
+  # sample.file <- file.path(getwd(), "data", "sample80_50.json")
+  # lines <- readLines(sample.file)
+  # df.raw <- plyr::ldply(lines, function(x) as.data.frame(jsonlite::fromJSON(x), stringsAsFactors = FALSE))
+  # saveRDS(object = df.raw, file = file.path(getwd(), "data", "df_http_get_80_raw_50.rds"))
 
-  # Column data is actually in base64
-  colnames(df.raw)[which(names(df.raw) == "data")] <- "datab64"
-  # Convert datab64 to data
-  df.raw$data <- sapply(df.raw$datab64, function(d) jsonlite::base64_dec(d))
+  rds.file <- file.path(getwd(), "data", paste("df_http_get_", port, "_raw_", rows, ".rds", sep = ""))
+  if (file.exists(rds.file)) {
+    df.raw <- readRDS(rds.file)
+  } else {
+    stop(verbose, "File does not exist")
+  }
+
+  # Convert base64 to raw data
+  df.raw$data <- sapply(df.raw$data, function(d) jsonlite::base64_dec(d))
   # Delete NULL chars
   df.raw$data <- sapply(df.raw$data, function(d) d[!d == '00'])
   # raw to char
   df.raw$data <- sapply(df.raw$data, function(d) rawToChar(d))
 
-  # Get Response Headers
-  df.raw$headers <- sapply(df.raw$data, function(d) head(unlist(strsplit(d, '\r\n\r\n', useBytes = TRUE)[[1]], 1)))
-  # Get Response Content
-  #df$body <- sapply(df$data, function(d) tail(strsplit(d, '\r\n\r\n', useBytes = TRUE)[[1]], -1))
 
+
+  # Get Response Headers
+  df.raw$headers <- sapply(df.raw$data, function(d) head(unlist(strsplit(d, '\r\n\r\n', useBytes = TRUE))[1], 1))
+  # Get Response Content
+  # df$body <- sapply(df$data, function(d) tail(strsplit(d, '\r\n\r\n', useBytes = TRUE)[1], -1))
   # Convert headers into vector of lines
-  df.raw$headers <- sapply(df.raw$headers, function(d) strsplit(d, '\r\n', useBytes = TRUE))
+  df.raw$headers <- sapply(df.raw$headers, function(d) unlist(strsplit(d, '\r\n', useBytes = TRUE)))
 
   # Fist line: version and status
-  df.raw$status <- sapply(df.raw$headers, function(d) d[[1]][1])
+  df.raw$status <- sapply(df.raw$headers, function(d) d[1])
   df.raw$status <- enc2utf8(df.raw$status)
   df.raw$version <- sapply(df.raw$status, function(d) substr(d, 1, 8))
-
-
   # Delete first line (http version and status) of headers
   df.raw$headers <- sapply(df.raw$headers, function(d) tail(d, length(d) - 1))
 
+  # Extract "Server" value
+  df.raw$server <- sapply(df.raw$headers,
+                          function(h) sapply(strsplit(h, ": ", useBytes = TRUE),
+                                             function(v) {
+                                               if (grepl("Server", v[1], useBytes = TRUE)) {v[2]}
+                                             }))
+  # Remove NULL values
+  df.raw$server <- sapply(df.raw$server, function(x) paste(plyr::compact(x), ""))
+
+  return(df.raw)
 }
 
 

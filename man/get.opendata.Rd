@@ -2,7 +2,7 @@
 % Please edit documentation in R/code.R
 \name{get.opendata}
 \alias{get.opendata}
-\title{Get opendata csv or json file from rapid7.com and convert it to dataframe object}
+\title{Get opendata csv or json file from rapid7.com and convert it into dataframe object.}
 \usage{
 get.opendata(opendata.url = NULL, verbose)
 }
@@ -12,13 +12,10 @@ get.opendata(opendata.url = NULL, verbose)
 \item{verbose}{Print logs}
 }
 \value{
-df.tcp21
+dataframe
 }
 \description{
-Función que se conecta a la web de rapid7 que lleva implicita, y se descarga un fichero en formato gz, el cual posteriormente lo descomprime y nos lo retorna en formato csv, borrando el fichero comprimido.
-}
-\details{
-Funcion que nos retorna un fichero con las IP que tienen abierto el puerto TCP
+This function downloads a compressed '.gz' file from opendata.rapid7.com website, and imports file from csv or json into dataframe object.
 }
 \examples{
 get.opendata(url, verbose)
