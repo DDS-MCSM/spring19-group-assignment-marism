@@ -115,6 +115,7 @@ get.maxmind <- function(verbose) {
 #' @param df Fichero que contiene los data frame
 #' @param ip.col Columna donde estan las IP
 #' @return df
+#' @export
 #' @examples
 #' add.numeric.ip(df, ip.col)
 add.numeric.ip <- function(df, ip.col) {
@@ -235,7 +236,7 @@ parse.headers <- function(port=80, rows=50, verbose=TRUE) {
   # Convert headers into vector of lines
   df.raw$headers <- sapply(df.raw$headers, function(d) unlist(strsplit(d, '\r\n', useBytes = TRUE)))
 
-  # Fist line: version and status
+  # First line: version and status
   df.raw$status <- sapply(df.raw$headers, function(d) d[1])
   df.raw$status <- enc2utf8(df.raw$status)
   df.raw$version <- sapply(df.raw$status, function(d) substr(d, 1, 8))

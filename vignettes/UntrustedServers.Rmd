@@ -1,0 +1,147 @@
+---
+title: "Untrusted Servers"
+author: "Martí Barri and Ismael López"
+date: "5/25/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Definimos el directorio de trabajo
+knitr::opts_knit$set(root.dir = "/home/marti/Desktop/master_cybersecurity/4_Data_Driven_Security/LAB/spring19-group-assignment-marism")
+verbose <- FALSE
+```
+
+
+```{r load_packages, echo = FALSE, cache = TRUE}
+# Required Packages
+#pkg <- c("ggplot2", "scales", "maptools", "sp", "maps", "grid", "car" ) # TODO
+pkg <- c("R.utils", "iptools", "parallel", "dplyr", "jsonlite", "GroupAssignmentPackage", "mapproj")
+
+# Instalar paquetes que no esten instalados
+new.pkg <- pkg[!(pkg %in% installed.packages())]
+if (length(new.pkg)) 
+{
+    install.packages(new.pkg)  
+}
+```
+
+
+## Resumen
+
+Dades obtingudes de:
+
+- [HTTP GET Responses](https://opendata.rapid7.com/sonar.http/)
+- [MaxMind IP Geolocation](https://dev.maxmind.com/geoip/geoip2/geolite2/)
+
+Objectius
+
+- ?Donde estan los servidores que estan dando servicio por procolos no seguros
+- ?que tipo de servidores son
+
+## An?lisis
+
+Podem descarregar mostres del port 80, el port web per defecte, però ocupa molt i treballerem sobre una mostra més petita.
+```{r load_response_data, echo = FALSE, cache = TRUE}
+df.raw <- readRDS(file.path(getwd(), "data", "df_http_get_80_raw_5k.rds"))
+df.raw[which(names(df.raw) == "host")] <- NULL
+df.raw[which(names(df.raw) == "vhost")] <- NULL
+df.raw[which(names(df.raw) == "path")] <- NULL
+
+str(df.raw)
+```
+
+Observem que està en base64 i IP repetida
+
+Descarreguem maxmind
+
+```{r load_maxmind, echo = FALSE, cache = TRUE}
+if ((!file.exists(file.path(getwd(), "data", "GeoLite2-City-Blocks-IPv4.csv")))){
+  df.maxmind <- GroupAssignmentPackage::get.maxmind(verbose)
+} else {
+  maxmind.source <- file.path(getwd(), "data", "GeoLite2-City-Blocks-IPv4.csv")
+  df.maxmind <- read.csv(maxmind.source, stringsAsFactors = FALSE)
+}
+str(df.maxmind)
+```
+
+
+Numeric address
+```{r numeric_ip, echo = FALSE, cache = TRUE}
+df.raw <- GroupAssignmentPackage::add.numeric.ip(df.raw, "ip")
+```
+
+
+
+```{r expand_maxmind, echo = FALSE, cache = TRUE}
+# Expanding MaxMind network ranges
+df.maxmind <- cbind(df.maxmind, iptools::range_boundaries(df.maxmind$network))
+df.maxmind$rowname <- as.integer(row.names(df.maxmind))
+```
+
+
+
+```{r geolocate, echo = FALSE, cache = TRUE}
+# Foreach IP (source and destination) identify network range using parallel computing"
+no_cores <- parallel::detectCores() - 1
+cl <- parallel::makeCluster(no_cores)
+parallel::clusterExport(cl, "df.maxmind", envir = environment())
+df.raw$loc <- sapply(df.raw$ip.num,
+                        function(ip)
+                          which((ip >= df.maxmind$min_numeric) &
+                                  (ip <= df.maxmind$max_numeric)))
+parallel::stopCluster(cl)
+rm(cl, no_cores)
+```
+
+Dades geolocalització elegants:
+```{r join_and_tidy, echo = FALSE, cache = TRUE}
+suppressMessages(library(dplyr))
+df <- dplyr::left_join(df.raw, df.maxmind, by = c("loc" = "rowname"))
+df.raw.geo <- dplyr::select(df, data, ip, port, latitude, longitude, accuracy_radius)
+names(df.raw.geo) <- c("data", "ip", "port", "latitude", "longitude", "accuracy_radius")
+rm(df.raw, df)
+str(df.raw.geo)
+```
+
+
+
+Representando esta informaci?n con un gr?fico de dispersi?n podemos ver que la distribuci?n se asemeja notablemente al mapamundi:
+```{r dispersion_coord, echo = FALSE, cache = TRUE, fig.align = 'center'}
+library(ggplot2)
+# Creamos ggplot con los datos de symantec
+gg <- ggplot(data=df.raw.geo, aes(x = longitude, y = latitude)) 
+# definimos la grafica por puntos con transparencia
+gg <- gg + geom_point(size=1, color="#000099", alpha=1/40) 
+# Titulos de los ejes
+gg <- gg + xlab("Longitud") + ylab("Latitud")
+# aplicamos el tema simple
+gg <- gg + theme_bw() 
+# tarda un poco pq son 800.000 puntos
+print(gg)
+```
+
+
+Con esta representaci?n se puede identificar que la mayor concentraci?n de infecciones ocurren en la mayor parte de Europa, la costa este de EEUU y en menor grado en Jap?n y otros puntos del planeta.  
+A?adimos informaci?n sobre paises y sus fronteras para enriquecer el mapa.
+```{r map_simple, echo=FALSE, cache=TRUE, fig.align='center'}
+world <- map_data("world")
+# Quitamos el continete Antarctico ya que no aporta informaci?n
+# No es nada personal con los pinguinos...
+world <- subset(world, world$region!="Antarctica")
+
+gg <- ggplot(data=world, aes(x=long, y=lat))
+gg <- gg + geom_path(aes(group=group), colour="gray70")
+# La definici?n de la proyeccion representa la "curvatura" del mapa
+gg <- gg + coord_map("mercator", xlim=c(-200, 200))
+# A?adimos una capa al mapa con la informaci?n de Zero Access
+gg <- gg + geom_point(data = df.raw.geo, aes(longitude, latitude), 
+                      colour="#000099", alpha=1/40, size=1)
+# Eliminamos texto y le damos un poco de color
+gg <- gg + theme(text=element_blank(), 
+                 axis.ticks=element_blank(),
+                 panel.grid=element_blank(),
+                 panel.background=element_rect(color="gray50",
+                                               fill="white"))
+print(gg)
+```

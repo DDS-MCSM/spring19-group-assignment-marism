@@ -33,3 +33,6 @@ data/*.csv
 data/*.json
 data/*.zip
 data/*.gz
+data/GeoLite2-City-CSV_20190514/
+
+vignettes/UntrustedServers_cache
