@@ -17,7 +17,7 @@ Adjuntamos el detalle de los enlaces:
 - [HTTP GET Responses](https://opendata.rapid7.com/sonar.http/)
 - [MaxMind IP Geolocation](https://dev.maxmind.com/geoip/geoip2/geolite2/)
 
-#Objetivos 
+# Objetivos 
 
 El objetivo de este analisis se centra en responder las siguientes preguntas:
 
@@ -29,8 +29,8 @@ El objetivo de este analisis se centra en responder las siguientes preguntas:
 knitr::opts_chunk$set(echo = TRUE)
 # Definimos el directorio de trabajo
 
-#knitr::opts_knit$set(root.dir = "/home/marti/Desktop/master_cybersecurity/4_Data_Driven_Security/LAB/spring19-group-assignment-marism")
-knitr::opts_knit$set(root.dir = "/Users/ismael/Documents/MASTER/PRACTICA/spring19-group-assignment-marism")
+knitr::opts_knit$set(root.dir = "/home/marti/Desktop/master_cybersecurity/4_Data_Driven_Security/LAB/spring19-group-assignment-marism")
+#knitr::opts_knit$set(root.dir = "/Users/ismael/Documents/MASTER/PRACTICA/spring19-group-assignment-marism")
 verbose <- FALSE
 ```
 
@@ -38,7 +38,7 @@ verbose <- FALSE
 ```{r load_packages, echo = FALSE, cache = TRUE}
 # Required Packages
 #pkg <- c("ggplot2", "scales", "maptools", "sp", "maps", "grid", "car" ) # TODO
-pkg <- c("R.utils", "iptools", "parallel", "dplyr", "jsonlite", "GroupAssignmentPackage", "mapproj")
+pkg <- c("R.utils", "iptools", "parallel", "dplyr", "jsonlite", "GroupAssignmentPackage", "mapproj", "kableExtra")
 
 # Instalar paquetes que no esten instalados
 new.pkg <- pkg[!(pkg %in% installed.packages())]
@@ -48,15 +48,25 @@ if (length(new.pkg))
 }
 ```
 
-## An?lisis
+## Análisis
 
-Podemos descargar el fichero directamente de la web, muestras del puerto 80, no obstante este fichero descomprimido ocupa (170,70GB) y tardariamos horas en porderlo procesar integramente. Por ello hemos considerado trabajar con una parte significativa de las muestras.
+Podemos descargar el fichero directamente de la web, muestras del puerto 80, no obstante este fichero descomprimido ocupa 170,70 GB y tardariamos horas en porderlo procesar integramente. Por ello hemos considerado trabajar con una parte significativa de las muestras.
+
+Para generar nuestro archivo realizamos las siguentes operaciones:
+
+`user@linux$ head -n 50  2019-04-22-1555944117-http_get_80.json > sample80_50.json`
+```{r sample, echo=TRUE, eval=FALSE}
+# > sample.file <- file.path(getwd(), "data", "sample80_50.json")
+# > lines <- readLines(sample.file)
+# > df.raw <- plyr::ldply(lines, function(x) as.data.frame(jsonlite::fromJSON(x), stringsAsFactors = FALSE))
+# > saveRDS(object = df.raw, file = file.path(getwd(), "data", "df_http_get_80_raw_50.rds"))
+```
 
 Si observamos detenidamente el fichero que con las muestras, podemos apreciar que la columan "data" tiene los datos cifrados en base64 y que algunas columnas tienen el contedido duplicado o que nos nos aporta nada al analisis que queremos realizar. 
 
 Por ello descartamos la informacion de la columna ("host", "vhost" y "path").
 
-La informaci?n del dataframe que nos interesa es la siguiente:
+La información del dataframe que nos interesa es la siguiente:
 
 ```{r load_response_data, echo = FALSE, cache = TRUE}
 df.raw <- readRDS(file.path(getwd(), "data", "df_http_get_80_raw_5k.rds"))
@@ -121,7 +131,7 @@ str(df.raw.geo)
 
 Una vez aplicado todo el procesamiento de tratamiento de datos, es hora de mostrar los resultados. 
 
-Representando esta informaci?n con un gr?fico de dispersi?n podemos ver que la distribuci?n se asemeja notablemente al mapamundi:
+Representando esta informaci?n con un gráfico de dispersión podemos ver que la distribuci?n se asemeja notablemente al mapamundi:
 ```{r dispersion_coord, echo = FALSE, cache = TRUE, fig.align = 'center'}
 library(ggplot2)
 # Creamos ggplot con los datos de symantec
@@ -136,8 +146,7 @@ gg <- gg + theme_bw()
 print(gg)
 ```
 
-Con esta representaci?n se puede identificar que la mayor concentraci?n de infecciones ocurren en la mayor parte de Europa, la costa este de EEUU y en menor grado en Jap?n y otros puntos del planeta.  
-A?adimos informaci?n sobre paises y sus fronteras para enriquecer el mapa.
+Añadimos información sobre paises y sus fronteras para enriquecer el mapa.
 ```{r map_simple, echo=FALSE, cache=TRUE, fig.align='center'}
 world <- map_data("world")
 # Quitamos el continete Antarctico ya que no aporta informaci?n
@@ -148,7 +157,7 @@ gg <- ggplot(data=world, aes(x=long, y=lat))
 gg <- gg + geom_path(aes(group=group), colour="gray70")
 # La definici?n de la proyeccion representa la "curvatura" del mapa
 gg <- gg + coord_map("mercator", xlim=c(-200, 200))
-# A?adimos una capa al mapa con la informaci?n de Zero Access
+# A?adimos una capa al mapa con la informacion
 gg <- gg + geom_point(data = df.raw.geo, aes(longitude, latitude), 
                       colour="#000099", alpha=1/40, size=1)
 # Eliminamos texto y le damos un poco de color
@@ -158,4 +167,57 @@ gg <- gg + theme(text=element_blank(),
                  panel.background=element_rect(color="gray50",
                                                fill="white"))
 print(gg)
+```
+
+
+Despues de ver la localización de los servidores, vamos a decodificar los datos y a parsear los headers para obtener información más detallada.
+```{r parse_headers, echo=FALSE, cache=TRUE}
+df <- GroupAssignmentPackage::parse.headers(df.raw.geo)
+```
+
+Podemos ver las versiones utilizadas de HTTP
+```{r kable, echo=FALSE, cache=TRU}
+kable(plyr::count(df$version)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+En azul la versión 1.0 y en rojo la 1.1
+```{r map_version, echo=FALSE, cache=TRUE, fig.align='center'}
+world <- map_data("world")
+# Quitamos el continete Antarctico ya que no aporta informaci?n
+# No es nada personal con los pinguinos...
+world <- subset(world, world$region!="Antarctica")
+
+gg <- ggplot(data=world, aes(x=long, y=lat))
+gg <- gg + geom_path(aes(group=group), colour="gray70")
+# La definici?n de la proyeccion representa la "curvatura" del mapa
+gg <- gg + coord_map("mercator", xlim=c(-200, 200))
+# Añadimos una capa al mapa con la informacion
+gg <- gg + geom_point(data = dplyr::filter(df, grepl('HTTP/1.0', version)), aes(longitude, latitude),
+                      colour="blue", alpha=1/40, size=1)
+
+gg <- gg + geom_point(data = dplyr::filter(df, grepl('HTTP/1.1', version)), aes(longitude, latitude),
+                      colour="red", alpha=1/40, size=1)
+# Eliminamos texto y le damos un poco de color
+gg <- gg + theme(text=element_blank(), 
+                 axis.ticks=element_blank(),
+                 panel.grid=element_blank(),
+                 panel.background=element_rect(color="gray50",
+                                               fill="white"))
+print(gg)
+```
+
+```{r servers, echo=FALSE, cache=TRU}
+servers <- plyr::count(unlist(df$server))
+ordered_servers <- servers[with(servers, order(-freq)), ]
+head(ordered_servers, 20)
+```
+
+```{r main_servers, echo=FALSE, cache=TRU}
+apache <- servers[grep("Apache", servers$x), ]
+sum_apache <- sum(apache$freq)
+nginx <- servers[grep("nginx", servers$x), ]
+sum_nginx <- sum(nginx$freq)
+win <- servers[grep("Microsoft", servers$x), ]
+sum_win <- sum(win$freq)
 ```
