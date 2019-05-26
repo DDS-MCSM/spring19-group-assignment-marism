@@ -2,13 +2,23 @@
 % Please edit documentation in R/code.R
 \name{parse.headers}
 \alias{parse.headers}
-\title{Title}
+\title{Generación del fichero de muestras}
 \usage{
 parse.headers(port = 80, rows = 50, verbose = TRUE)
 }
 \arguments{
-\item{verbose}{}
+\item{port}{Nos indica el puerto del que estamos realizando el analisis}
+
+\item{rows}{Filas que queremos extraer}
+
+\item{verbose}{Si queremos mostrar por consola más información de las operaciones que va realizando}
+}
+\value{
+df.raw dataframe con los datos limpios
 }
 \description{
-Title
+Función que genera el fichero que utlizaremos para el informe, para ello
+}
+\examples{
+parse.headers(port=80, rows=50, verbose=TRUE)
 }
