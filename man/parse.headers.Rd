@@ -2,19 +2,16 @@
 % Please edit documentation in R/code.R
 \name{parse.headers}
 \alias{parse.headers}
-\title{Generación del fichero de muestras}
+\title{Parsing headers of dataframe with data column encoded in base64}
 \usage{
 parse.headers(df.raw)
 }
-\arguments{
-\item{df.raw}{}
-}
 \value{
-df.raw dataframe con los datos limpios
+parsed df
 }
 \description{
-Función que genera el fichero que utlizaremos para el informe, para ello
+Decode data in base64, extract headers, status, http version and server
 }
 \examples{
-parse.headers(port=80, rows=50, verbose=TRUE)
+parse.headers(df.raw)
 }

@@ -2,13 +2,17 @@
 % Please edit documentation in R/code.R
 \name{http.responses}
 \alias{http.responses}
-\title{Title}
+\title{Generación del fichero de muestras}
 \usage{
 http.responses(port = 80, rows = 50, verbose = TRUE)
 }
 \arguments{
-\item{verbose}{}
+\item{port}{Nos indica el puerto del que estamos realizando el analisis}
+
+\item{rows}{Filas que queremos extraer}
+
+\item{verbose}{Si queremos mostrar por consola más información de las operaciones que va realizando}
 }
 \description{
-Title
+Función que utiliza el fichero usado en el informe Rmd
 }

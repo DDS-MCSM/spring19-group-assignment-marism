@@ -194,17 +194,13 @@ join.tidy.data <- function(df.maxmind, df.scans) {
 }
 
 
-#' @title Generación del fichero de muestras
-#' @description Función que genera el fichero que utlizaremos para el informe, para ello
-#' @param port Nos indica el puerto del que estamos realizando el analisis
-#' @param rows Filas que queremos extraer
-#' @param verbose Si queremos mostrar por consola más información de las operaciones que va realizando
-#'
+#' @title Parsing headers of dataframe with data column encoded in base64
+#' @description Decode data in base64, extract headers, status, http version and server
 #' @param df.raw
-#'
-#' @return
+#' @return parsed df
 #' @export
 #' @examples
+#' parse.headers(df.raw)
 parse.headers <- function(df.raw) {
 
   # Convert base64 to raw data
@@ -241,15 +237,13 @@ parse.headers <- function(df.raw) {
 }
 
 
-#' Title
-#'
-#' @param port
-#' @param rows
-#' @param verbose
-#'
+#' @title Generación del fichero de muestras
+#' @description Función que utiliza el fichero usado en el informe Rmd
+#' @param port Nos indica el puerto del que estamos realizando el analisis
+#' @param rows Filas que queremos extraer
+#' @param verbose Si queremos mostrar por consola más información de las operaciones que va realizando
 #' @return
 #' @export
-#'
 #' @examples
 http.responses <- function(port=80, rows=50, verbose=TRUE) {
 
