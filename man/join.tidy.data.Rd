@@ -2,7 +2,7 @@
 % Please edit documentation in R/code.R
 \name{join.tidy.data}
 \alias{join.tidy.data}
-\title{Unió de resultados}
+\title{Unión de resultados}
 \usage{
 join.tidy.data(df.maxmind, df.scans)
 }

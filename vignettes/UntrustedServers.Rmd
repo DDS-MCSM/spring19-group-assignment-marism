@@ -4,11 +4,33 @@ author: "Martí Barri and Ismael López"
 date: "5/25/2019"
 output: html_document
 ---
+# An?lisis de los servidores que ofrecen servicio por protocolos no seguros
+
+## Resumen
+Este informe se centra en realiza un estudio de los tipos de servidores que estan ofreciendo respuesta por protocolos no seguro. 
+En la pr?xima versión de este documento intentaremos relacionar los servidores con sus posibles vulnerabilidades, pero esta versi?n ha sido desestimado por falta de tiempo.
+
+Todo los datos han sido obtenidos de fuentes publicas y el an?lisis corresponde a la situaci?n en que nos encontrabamos a día 22-04-2019. 
+
+Adjuntamos el detalle de los enlaces:
+
+- [HTTP GET Responses](https://opendata.rapid7.com/sonar.http/)
+- [MaxMind IP Geolocation](https://dev.maxmind.com/geoip/geoip2/geolite2/)
+
+#Objetivos 
+
+El objetivo de este analisis se centra en responder las siguientes preguntas:
+
+- ?Donde estan ubicados los servidores que estan dando servicio por procolos no seguros
+- ?que tipo de servidores son
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 # Definimos el directorio de trabajo
-knitr::opts_knit$set(root.dir = "/home/marti/Desktop/master_cybersecurity/4_Data_Driven_Security/LAB/spring19-group-assignment-marism")
+
+#knitr::opts_knit$set(root.dir = "/home/marti/Desktop/master_cybersecurity/4_Data_Driven_Security/LAB/spring19-group-assignment-marism")
+knitr::opts_knit$set(root.dir = "/Users/ismael/Documents/MASTER/PRACTICA/spring19-group-assignment-marism")
 verbose <- FALSE
 ```
 
@@ -26,22 +48,16 @@ if (length(new.pkg))
 }
 ```
 
-
-## Resumen
-
-Dades obtingudes de:
-
-- [HTTP GET Responses](https://opendata.rapid7.com/sonar.http/)
-- [MaxMind IP Geolocation](https://dev.maxmind.com/geoip/geoip2/geolite2/)
-
-Objectius
-
-- ?Donde estan los servidores que estan dando servicio por procolos no seguros
-- ?que tipo de servidores son
-
 ## An?lisis
 
-Podem descarregar mostres del port 80, el port web per defecte, però ocupa molt i treballerem sobre una mostra més petita.
+Podemos descargar el fichero directamente de la web, muestras del puerto 80, no obstante este fichero descomprimido ocupa (170,70GB) y tardariamos horas en porderlo procesar integramente. Por ello hemos considerado trabajar con una parte significativa de las muestras.
+
+Si observamos detenidamente el fichero que con las muestras, podemos apreciar que la columan "data" tiene los datos cifrados en base64 y que algunas columnas tienen el contedido duplicado o que nos nos aporta nada al analisis que queremos realizar. 
+
+Por ello descartamos la informacion de la columna ("host", "vhost" y "path").
+
+La informaci?n del dataframe que nos interesa es la siguiente:
+
 ```{r load_response_data, echo = FALSE, cache = TRUE}
 df.raw <- readRDS(file.path(getwd(), "data", "df_http_get_80_raw_5k.rds"))
 df.raw[which(names(df.raw) == "host")] <- NULL
@@ -51,9 +67,7 @@ df.raw[which(names(df.raw) == "path")] <- NULL
 str(df.raw)
 ```
 
-Observem que està en base64 i IP repetida
-
-Descarreguem maxmind
+Procedemos a la descarga del Maxmind, con los siguiente campos de información:
 
 ```{r load_maxmind, echo = FALSE, cache = TRUE}
 if ((!file.exists(file.path(getwd(), "data", "GeoLite2-City-Blocks-IPv4.csv")))){
@@ -66,7 +80,7 @@ str(df.maxmind)
 ```
 
 
-Numeric address
+
 ```{r numeric_ip, echo = FALSE, cache = TRUE}
 df.raw <- GroupAssignmentPackage::add.numeric.ip(df.raw, "ip")
 ```
@@ -94,7 +108,7 @@ parallel::stopCluster(cl)
 rm(cl, no_cores)
 ```
 
-Dades geolocalització elegants:
+De ambos ficheros despu?s de procesarlos, los juntamos en uno ?nico, conservando ?nicamente aquellos campos que de verdad nos aportan informacion.
 ```{r join_and_tidy, echo = FALSE, cache = TRUE}
 suppressMessages(library(dplyr))
 df <- dplyr::left_join(df.raw, df.maxmind, by = c("loc" = "rowname"))
@@ -105,6 +119,7 @@ str(df.raw.geo)
 ```
 
 
+Una vez aplicado todo el procesamiento de tratamiento de datos, es hora de mostrar los resultados. 
 
 Representando esta informaci?n con un gr?fico de dispersi?n podemos ver que la distribuci?n se asemeja notablemente al mapamundi:
 ```{r dispersion_coord, echo = FALSE, cache = TRUE, fig.align = 'center'}
@@ -120,7 +135,6 @@ gg <- gg + theme_bw()
 # tarda un poco pq son 800.000 puntos
 print(gg)
 ```
-
 
 Con esta representaci?n se puede identificar que la mayor concentraci?n de infecciones ocurren en la mayor parte de Europa, la costa este de EEUU y en menor grado en Jap?n y otros puntos del planeta.  
 A?adimos informaci?n sobre paises y sus fronteras para enriquecer el mapa.

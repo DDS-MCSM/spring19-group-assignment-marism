@@ -14,7 +14,7 @@ syso <- function(verbose, x) {
 #' @title Valida la existencia del directorio de trabajo "data"
 #' @description Función que establece el directorio de trabajo en data y en caso de no existir lo crea.
 #' @details No se le pasa ningun valor a la función ya que dejamos como predefinido "data" por defecto, sin capacidad de ser alterado.
-#' @param
+#'
 #' @export
 #' @examples
 #' create.dir.data()
@@ -128,7 +128,7 @@ add.numeric.ip <- function(df, ip.col) {
 
 #' @title Funció para obtener las n primeras muestras de un data frame
 #' @description Función a la que le pasas un data frame con muchos datos y te retorna las n linias que le pases
-#'como parametro
+#' como parametro
 #' @details Necesitas pasarle un df y un valor numerico
 #' @param df Fichero que contiene el data frame
 #' @param nrows Numero de muestras que queremos tratar
@@ -168,7 +168,7 @@ geolocate.ip.range <- function(df.maxmind, df.scans) {
   return(df.scans)
 }
 
-#' @title Unió de resultados
+#' @title Unión de resultados
 #' @description Función que nos une los dos data frame, para optener los resultados que queremos obtener la geolocalización a nivel de ciudad de las IP identifcadas con vulnerabilidad.
 #' @details Dados dos df de entrada, retorna uno con los resultados que queremos mostrar
 #' @param df.maxmind Data frame de maxmind
@@ -194,13 +194,16 @@ join.tidy.data <- function(df.maxmind, df.scans) {
 }
 
 
-#' Title
+#' @title Generación del fichero de muestras
+#' @description Función que genera el fichero que utlizaremos para el informe, para ello
+#' @param port Nos indica el puerto del que estamos realizando el analisis
+#' @param rows Filas que queremos extraer
+#' @param verbose Si queremos mostrar por consola más información de las operaciones que va realizando
 #'
 #' @param df.raw
 #'
 #' @return
 #' @export
-#'
 #' @examples
 parse.headers <- function(df.raw) {
 

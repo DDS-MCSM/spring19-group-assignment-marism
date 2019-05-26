@@ -2,13 +2,19 @@
 % Please edit documentation in R/code.R
 \name{parse.headers}
 \alias{parse.headers}
-\title{Title}
+\title{Generación del fichero de muestras}
 \usage{
 parse.headers(df.raw)
 }
 \arguments{
 \item{df.raw}{}
 }
+\value{
+df.raw dataframe con los datos limpios
+}
 \description{
-Title
+Función que genera el fichero que utlizaremos para el informe, para ello
+}
+\examples{
+parse.headers(port=80, rows=50, verbose=TRUE)
 }
