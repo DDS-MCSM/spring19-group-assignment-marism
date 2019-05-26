@@ -196,29 +196,13 @@ join.tidy.data <- function(df.maxmind, df.scans) {
 
 #' Title
 #'
-#' @param port
-#' @param rows
-#' @param verbose
+#' @param df.raw
 #'
 #' @return
 #' @export
 #'
 #' @examples
-parse.headers <- function(port=80, rows=50, verbose=TRUE) {
-
-  # Example of rds file generation:
-  # user@linux$ head -n 50  2019-04-22-1555944117-http_get_80.json > sample80_50.json
-  # sample.file <- file.path(getwd(), "data", "sample80_50.json")
-  # lines <- readLines(sample.file)
-  # df.raw <- plyr::ldply(lines, function(x) as.data.frame(jsonlite::fromJSON(x), stringsAsFactors = FALSE))
-  # saveRDS(object = df.raw, file = file.path(getwd(), "data", "df_http_get_80_raw_50.rds"))
-
-  rds.file <- file.path(getwd(), "data", paste("df_http_get_", port, "_raw_", rows, ".rds", sep = ""))
-  if (file.exists(rds.file)) {
-    df.raw <- readRDS(rds.file)
-  } else {
-    stop(verbose, "File does not exist")
-  }
+parse.headers <- function(df.raw) {
 
   # Convert base64 to raw data
   df.raw$data <- sapply(df.raw$data, function(d) jsonlite::base64_dec(d))
@@ -226,8 +210,6 @@ parse.headers <- function(port=80, rows=50, verbose=TRUE) {
   df.raw$data <- sapply(df.raw$data, function(d) d[!d == '00'])
   # raw to char
   df.raw$data <- sapply(df.raw$data, function(d) rawToChar(d))
-
-
 
   # Get Response Headers
   df.raw$headers <- sapply(df.raw$data, function(d) head(unlist(strsplit(d, '\r\n\r\n', useBytes = TRUE))[1], 1))
@@ -253,6 +235,38 @@ parse.headers <- function(port=80, rows=50, verbose=TRUE) {
   df.raw$server <- sapply(df.raw$server, function(x) paste(plyr::compact(x), ""))
 
   return(df.raw)
+}
+
+
+#' Title
+#'
+#' @param port
+#' @param rows
+#' @param verbose
+#'
+#' @return
+#' @export
+#'
+#' @examples
+http.responses <- function(port=80, rows=50, verbose=TRUE) {
+
+  # Example of rds file generation:
+  # user@linux$ head -n 50  2019-04-22-1555944117-http_get_80.json > sample80_50.json
+  # sample.file <- file.path(getwd(), "data", "sample80_50.json")
+  # lines <- readLines(sample.file)
+  # df.raw <- plyr::ldply(lines, function(x) as.data.frame(jsonlite::fromJSON(x), stringsAsFactors = FALSE))
+  # saveRDS(object = df.raw, file = file.path(getwd(), "data", "df_http_get_80_raw_50.rds"))
+
+  rds.file <- file.path(getwd(), "data", paste("df_http_get_", port, "_raw_", rows, ".rds", sep = ""))
+  if (file.exists(rds.file)) {
+    df.raw <- readRDS(rds.file)
+  } else {
+    stop(verbose, "File does not exist")
+  }
+
+  df <- parse.headers(df.raw)
+
+  return(df)
 }
 
 

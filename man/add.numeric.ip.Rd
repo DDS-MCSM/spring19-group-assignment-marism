@@ -4,7 +4,7 @@
 \alias{add.numeric.ip}
 \title{Función para convertir las IP en numeros}
 \usage{
-add.numeric.ip(df, ip.col)
+\method{add}{numeric.ip}(df, ip.col)
 }
 \arguments{
 \item{df}{Fichero que contiene los data frame}
