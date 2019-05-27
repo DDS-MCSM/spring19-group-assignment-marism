@@ -13,6 +13,7 @@ Imports:
     R.utils,
     iptools,
     parallel,
+    plyr,
     dplyr,
     jsonlite
 Suggests: 

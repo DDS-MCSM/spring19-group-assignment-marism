@@ -117,7 +117,9 @@ get.maxmind <- function(verbose) {
 #' @return df
 #' @export
 #' @examples
+#' \dont run{
 #' add.numeric.ip(df, ip.col)
+#' }
 add.numeric.ip <- function(df, ip.col) {
   # you can't use $ to select a column via d$a.
   # R will look for a column whose name is a.
