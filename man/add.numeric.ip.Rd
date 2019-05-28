@@ -21,5 +21,7 @@ Dada una IP te la convierte a numero quitando los espacios.
 Le pasas el datframe y la columna donde se encuentran las IP y el te retorna el mismo data frame convertiendo las IP en nuemeros
 }
 \examples{
+\dontrun{
 add.numeric.ip(df, ip.col)
+}
 }

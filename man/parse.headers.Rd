@@ -12,6 +12,3 @@ parsed df
 \description{
 Decode data in base64, extract headers, status, http version and server
 }
-\examples{
-parse.headers(df.raw)
-}

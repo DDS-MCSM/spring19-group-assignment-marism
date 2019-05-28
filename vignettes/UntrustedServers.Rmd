@@ -37,7 +37,6 @@ verbose <- FALSE
 
 ```{r load_packages, echo = FALSE, cache = TRUE}
 # Required Packages
-#pkg <- c("ggplot2", "scales", "maptools", "sp", "maps", "grid", "car" ) # TODO
 pkg <- c("R.utils", "iptools", "parallel", "dplyr", "jsonlite", "GroupAssignmentPackage", "mapproj", "kableExtra")
 
 # Instalar paquetes que no esten instalados
@@ -46,6 +45,8 @@ if (length(new.pkg))
 {
     install.packages(new.pkg)  
 }
+# Load packages
+lapply(pkg, require, character.only = TRUE)
 ```
 
 ## Análisis
@@ -73,31 +74,19 @@ df.raw <- readRDS(file.path(getwd(), "data", "df_http_get_80_raw_5k.rds"))
 df.raw[which(names(df.raw) == "host")] <- NULL
 df.raw[which(names(df.raw) == "vhost")] <- NULL
 df.raw[which(names(df.raw) == "path")] <- NULL
-
 str(df.raw)
 ```
 
 Procedemos a la descarga del Maxmind, con los siguiente campos de información:
 
 ```{r load_maxmind, echo = FALSE, cache = TRUE}
+# Get maxmind
 if ((!file.exists(file.path(getwd(), "data", "GeoLite2-City-Blocks-IPv4.csv")))){
   df.maxmind <- GroupAssignmentPackage::get.maxmind(verbose)
 } else {
   maxmind.source <- file.path(getwd(), "data", "GeoLite2-City-Blocks-IPv4.csv")
   df.maxmind <- read.csv(maxmind.source, stringsAsFactors = FALSE)
 }
-str(df.maxmind)
-```
-
-
-
-```{r numeric_ip, echo = FALSE, cache = TRUE}
-df.raw <- GroupAssignmentPackage::add.numeric.ip(df.raw, "ip")
-```
-
-
-
-```{r expand_maxmind, echo = FALSE, cache = TRUE}
 # Expanding MaxMind network ranges
 df.maxmind <- cbind(df.maxmind, iptools::range_boundaries(df.maxmind$network))
 df.maxmind$rowname <- as.integer(row.names(df.maxmind))
@@ -106,28 +95,13 @@ df.maxmind$rowname <- as.integer(row.names(df.maxmind))
 
 
 ```{r geolocate, echo = FALSE, cache = TRUE}
-# Foreach IP (source and destination) identify network range using parallel computing"
-no_cores <- parallel::detectCores() - 1
-cl <- parallel::makeCluster(no_cores)
-parallel::clusterExport(cl, "df.maxmind", envir = environment())
-df.raw$loc <- parallel::parSapply(cl, df.raw$ip.num,
-                        function(ip)
-                          which((ip >= df.maxmind$min_numeric) &
-                                  (ip <= df.maxmind$max_numeric)))
-parallel::stopCluster(cl)
-if (is.list(df.raw$loc)) {
-  df.raw$loc <- as.numeric(df.raw$loc)
+if (!file.exists(file.path(getwd(), "data", "df_http_get_80_raw_geo_5k.rds"))){
+  df.raw <- GroupAssignmentPackage::add.numeric.ip(df.raw, "ip")
+  df.raw.geo <- GroupAssignmentPackage::geolocate.http.responses(df.maxmind, df.raw)
+} else {
+  df.raw.geo <- readRDS(file.path(getwd(), "data", "df_http_get_80_raw_geo_5k.rds"))
 }
-rm(cl, no_cores)
-```
-
-De ambos ficheros después de procesarlos, los juntamos en uno único, conservando únicamente aquellos campos que de verdad nos aportan informacion.
-```{r join_and_tidy, echo = FALSE, cache = TRUE}
-suppressMessages(library(dplyr))
-df <- dplyr::left_join(df.raw, df.maxmind, by = c("loc" = "rowname"))
-df.raw.geo <- dplyr::select(df, data, ip, port, latitude, longitude, accuracy_radius)
-names(df.raw.geo) <- c("data", "ip", "port", "latitude", "longitude", "accuracy_radius")
-rm(df.raw, df)
+rm(df.raw)
 str(df.raw.geo)
 ```
 
@@ -138,7 +112,7 @@ Representando esta información con un gráfico de dispersión podemos ver que l
 ```{r dispersion_coord, echo = FALSE, cache = TRUE, fig.align = 'center'}
 library(ggplot2)
 # Creamos ggplot con los datos de symantec
-gg <- ggplot(data=df.raw.geo, aes(x = longitude, y = latitude)) 
+gg <- ggplot(data = df.raw.geo, aes(x = longitude, y = latitude)) 
 # definimos la grafica por puntos con transparencia
 gg <- gg + geom_point(size=1, color="#000099", alpha=1/40) 
 # Titulos de los ejes
@@ -179,7 +153,7 @@ df <- GroupAssignmentPackage::parse.headers(df.raw.geo)
 ```
 
 Podemos ver las versiones utilizadas de HTTP
-```{r kable, echo=FALSE, cache=TRU}
+```{r kable, echo=FALSE, cache=TRUE}
 kable(plyr::count(df$version)) %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
@@ -210,13 +184,13 @@ gg <- gg + theme(text=element_blank(),
 print(gg)
 ```
 
-```{r servers, echo=FALSE, cache=TRU}
+```{r servers, echo=FALSE, cache=TRUE}
 servers <- plyr::count(unlist(df$server))
 ordered_servers <- servers[with(servers, order(-freq)), ]
 head(ordered_servers, 20)
 ```
 
-```{r main_servers, echo=FALSE, cache=TRU}
+```{r main_servers, echo=FALSE, cache=TRUE}
 apache <- servers[grep("Apache", servers$x), ]
 sum_apache <- sum(apache$freq)
 nginx <- servers[grep("nginx", servers$x), ]

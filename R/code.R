@@ -117,7 +117,7 @@ get.maxmind <- function(verbose) {
 #' @return df
 #' @export
 #' @examples
-#' \dont run{
+#' \dontrun{
 #' add.numeric.ip(df, ip.col)
 #' }
 add.numeric.ip <- function(df, ip.col) {
@@ -196,15 +196,42 @@ join.tidy.data <- function(df.maxmind, df.scans) {
 }
 
 
+#' @title Geolocate ip address using maxmind
+#' @description Used in UntrustedServers.Rmd
+#' @param df.maxmind
+#' @param df.raw
+#'
+#' @return df.raw.geo
+#' @export
+geolocate.http.responses <- function(df.maxmind, df.raw) {
+  no_cores <- parallel::detectCores() - 1
+  cl <- parallel::makeCluster(no_cores)
+  parallel::clusterExport(cl, "df.maxmind", envir = environment())
+  df.raw$loc <- parallel::parSapply(cl, df.raw$ip.num,
+                                    function(ip)
+                                      which((ip >= df.maxmind$min_numeric) &
+                                              (ip <= df.maxmind$max_numeric)))
+  parallel::stopCluster(cl)
+  if (is.list(df.raw$loc)) {
+    df.raw$loc <- as.numeric(df.raw$loc)
+  }
+  rm(cl, no_cores)
+  # De ambos ficheros después de procesarlos, los juntamos en uno único, conservando únicamente aquellos campos que de verdad nos aportan informacion.
+  suppressMessages(library(dplyr))
+  df <- dplyr::left_join(df.raw, df.maxmind, by = c("loc" = "rowname"))
+  df.raw.geo <- dplyr::select(df, data, ip, port, latitude, longitude, accuracy_radius)
+  names(df.raw.geo) <- c("data", "ip", "port", "latitude", "longitude", "accuracy_radius")
+  rm(df)
+  return(df.raw.geo)
+}
+
+
 #' @title Parsing headers of dataframe with data column encoded in base64
 #' @description Decode data in base64, extract headers, status, http version and server
 #' @param df.raw
 #' @return parsed df
 #' @export
-#' @examples
-#' parse.headers(df.raw)
 parse.headers <- function(df.raw) {
-
   # Convert base64 to raw data
   df.raw$data <- sapply(df.raw$data, function(d) jsonlite::base64_dec(d))
   # Delete NULL chars
@@ -246,7 +273,6 @@ parse.headers <- function(df.raw) {
 #' @param verbose Si queremos mostrar por consola más información de las operaciones que va realizando
 #' @return
 #' @export
-#' @examples
 http.responses <- function(port=80, rows=50, verbose=TRUE) {
 
   # Example of rds file generation:
