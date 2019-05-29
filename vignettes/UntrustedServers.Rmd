@@ -23,7 +23,7 @@ El objetivo de este análisis se centra en responder las siguientes preguntas:
 
 - ¿Dónde estan ubicados los servidores que estan dando servicio por procolos no seguros?
 - ¿Qué tipo de servidores son?
-- ¿Los paises desarllados son más seguros a nivel de seguridad informatica que los subdesarollados?
+- ¿Los paises desarollados son más seguros a nivel de seguridad informatica que los subdesarollados?
 
 
 ```{r setup, include=FALSE}
@@ -100,14 +100,11 @@ if (!file.exists(file.path(getwd(), "data", "df_http_get_80_raw_geo_5k.rds"))) {
 
 En el fichero Maxmind obtenemos geolocalización de un rango de IP y por lado en el fichero de df_http_get_80_raw_5k.rds tenemos una única IP, el objetivo de este apartado es conseguir la geolocalización de esa IP. 
 
-Para poder comparar en que rango de IP cae esa IP y obtener la geolocalización, convertimos las IP en una variable numérica y vamos iterando hasta encontrar el rango en que el  IP es mayor o igual al valor máximo.
+Para poder comparar en que rango de IP cae esa IP y obtener la geolocalización, convertimos las IP en una variable numérica y vamos iterando hasta encontrar el rango en que IP en que la muestra sea mayor o igual al valor minimo y a su vez sea mas pequeña o igual al valor máximo.
 
+Al realizar esta iteración se consumen mucho tiempo, por ello hemos intentado paralelizar estas operaciones por cada uno de los procesadores que tenemos disponibles en la maquina.
 
-El objetivo es saber cada IP de las muestras que 
-
-
-
-El contenido del fichero Maxmind, contienen la siguiente información:
+El fichero resultmate de todas estas iteraciones es el siguiente:
 
 ```{r geolocate, echo = FALSE, cache = TRUE}
 if (!file.exists(file.path(getwd(), "data", "df_http_get_80_raw_geo_5k.rds"))){
@@ -119,7 +116,7 @@ if (!file.exists(file.path(getwd(), "data", "df_http_get_80_raw_geo_5k.rds"))){
 rm(df.raw)
 str(df.raw.geo)
 ```
-
+Como se puede apreciar hemos juntado la parte del maxmaind que nos aporta datos de la geolocalizacion (latiude, longitude, accuracy_radius) al fichero de muestras que teneiamos incialmente.
 
 Una vez aplicado todo el procesamiento y tratamiento de datos, es hora de mostrar los resultados. 
 
@@ -167,13 +164,24 @@ Después de ver la localización de los servidores, vamos a decodificar los dato
 df <- GroupAssignmentPackage::parse.headers(df.raw.geo)
 ```
 
-Podemos ver las versiones utilizadas de HTTP
+Hacemos un poco de retrospectiva en la historia para poder entender el siguiente resultado. 
+
+- La versión http/1.0 nacio en (1996)
+Se incluia como mejoras como el soporte a algunos verbos como GET, POST y HEAD. 
+
+- La versión http/1.1 nacio en (1999/2000)
+Se incluian  verbos GET,POST,PUT,DELETE,etc y la web se empezaba a orientar a recursos (REST), teníamos las cabeceras en las peticiones, etc
+
+En ambas versiones tanto las respuestas como las peticiones se realizan a través de texto plano.
+
+Podemos ver el numero de  versiones utilizadas de HTTP:
 ```{r kable, echo=FALSE, cache=TRUE}
 kable(plyr::count(df$http.version)) %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-Y los tipos de respuesta
+
+Y los tipos de respuesta:
 ```{r kable, echo=FALSE, cache=TRUE}
 http.status.number <- sapply(df$http.status, function(x) unlist(strsplit(x, " ", useBytes = TRUE))[2])
 http.status.number <- plyr::count(http.status.number)
@@ -208,12 +216,14 @@ gg <- gg + theme(text=element_blank(),
 print(gg)
 ```
 
+De todos los resultados que hemos obtenido, los agrupamos per tipologia de servidor y mostramos los 20 primeros que contengan más resultados:
+
 ```{r servers, echo=FALSE, cache=TRUE}
 servers <- plyr::count(unlist(df$server))
 ordered_servers <- servers[with(servers, order(-freq)), ]
 head(ordered_servers, 20)
 ```
-
+Filtramos por el tipo de servidor independientemente de la versión:
 ```{r main_servers, echo=FALSE, cache=TRUE}
 servers.apache <- servers[grep("Apache", servers$x), ]
 sum_apache <- sum(servers.apache$freq)
@@ -223,6 +233,7 @@ servers.win <- servers[grep("Microsoft", servers$x), ]
 sum_win <- sum(servers.win$freq)
 ```
 
+Buscamos las realiación que hay entre el servidor, CPE y CVE, para obtener la criticidad de las vulnerabilidades.
 
 Get CVEs and CPEs from net.security package
 ```{r cve_cpe, echo=FALSE, cache=TRUE}
