@@ -15,7 +15,8 @@ Imports:
     parallel,
     plyr,
     dplyr,
-    jsonlite
+    jsonlite,
+    net.security
 Suggests: 
     knitr
 RoxygenNote: 6.1.1

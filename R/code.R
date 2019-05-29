@@ -226,6 +226,47 @@ geolocate.http.responses <- function(df.maxmind, df.raw) {
 }
 
 
+#' @title Return cpe22 or cpe23 from vendor and version
+#' @description Requiered net.security package updated.
+#'
+#' @param vendor
+#' @param version
+#' @param cpe.version
+#' @param cpes
+#'
+#' @return cpe
+#' @export
+get.cpe <- function(vendor, version, cpe.version = 22, cpes = NULL) {
+  if (is.null(cpes)) { # Default file
+    cpes <- net.security::GetDataFrame("cpes")
+  }
+  if (is.na(vendor) | is.na(version)) return(NA)
+  if (tolower(vendor) == "apache") {
+    # if vendor is "apache", search only product "http_server"
+    i <- which(cpes$vendor == tolower(vendor) & cpes$version == version
+               & cpes$product == "http_server")
+  } else if (tolower(vendor) == "microsoft-iis") {
+    # if vendor is "Microsoft-IIS", search only product "internet_information_server	"
+    i <- which(cpes$vendor == "microsoft" & cpes$version == version
+               & cpes$product == "internet_information_server")
+  } else  {
+    i <- which(cpes$vendor == tolower(vendor) & cpes$version == version)
+  }
+  row <- cpes[i,]
+  if (nrow(row) == 0) { # If no results, try using our vendor as product
+    i <- which(cpes$product == tolower(vendor) & cpes$version == version)
+    row <- cpes[i,]
+  }
+  if (cpe.version == 22 & nrow(row) != 0) {
+    return(row$cpe.22)
+  } else if (cpe.version == 23 & nrow(row) != 0) {
+    return(row$cpe.23)
+  } else {
+    return(NA)
+  }
+}
+
+
 #' @title Parsing headers of dataframe with data column encoded in base64
 #' @description Decode data in base64, extract headers, status, http version and server
 #' @param df.raw
@@ -240,7 +281,7 @@ parse.headers <- function(df.raw) {
   df.raw$data <- sapply(df.raw$data, function(d) rawToChar(d))
 
   # Get Response Headers
-  df.raw$headers <- sapply(df.raw$data, function(d) head(unlist(strsplit(d, '\r\n\r\n', useBytes = TRUE))[1], 1))
+  df.raw$headers <- sapply(df.raw$data, function(d) head(unlist(strsplit(d, '\r\n\r\n', useBytes = TRUE)), 1))
   # Get Response Content
   # df$body <- sapply(df$data, function(d) tail(strsplit(d, '\r\n\r\n', useBytes = TRUE)[1], -1))
   # Convert headers into vector of lines
@@ -259,8 +300,14 @@ parse.headers <- function(df.raw) {
                                              function(v) {
                                                if (grepl("Server", v[1], useBytes = TRUE)) {v[2]}
                                              }))
+
   # Remove NULL values
   df.raw$server <- sapply(df.raw$server, function(x) paste(plyr::compact(x), ""))
+  # Delete last space added
+  df.raw$server <- sapply(df.raw$server, function(x) gsub(" $","", x))
+
+  df.raw$cpe22 <- mapply(x = df.raw$vendor, y = df.raw$version, FUN = function(x, y) get.cpe(x, y, 22))
+  df.raw$cpe23 <- mapply(x = df.raw$vendor, y = df.raw$version, FUN = function(x, y) get.cpe(x, y, 23))
 
   return(df.raw)
 }
