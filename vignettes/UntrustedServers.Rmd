@@ -8,9 +8,9 @@ output: html_document
 
 ## Resumen
 Este informe se centra en realiza un estudio de los tipos de servidores que estan ofreciendo respuesta por protocolos no seguro. 
-En la pr?xima versión de este documento intentaremos relacionar los servidores con sus posibles vulnerabilidades, pero esta versi?n ha sido desestimado por falta de tiempo.
+En la próxima versión de este documento intentaremos relacionar los servidores con sus posibles vulnerabilidades, pero esta versión ha sido desestimado por falta de tiempo.
 
-Todo los datos han sido obtenidos de fuentes publicas y el an?lisis corresponde a la situaci?n en que nos encontrabamos a día 22-04-2019. 
+Todo los datos han sido obtenidos de fuentes publicas y el análisis corresponde a la situación en que nos encontrabamos a día 22-04-2019. 
 
 Adjuntamos el detalle de los enlaces:
 
@@ -19,23 +19,24 @@ Adjuntamos el detalle de los enlaces:
 
 # Objetivos 
 
-El objetivo de este analisis se centra en responder las siguientes preguntas:
+El objetivo de este análisis se centra en responder las siguientes preguntas:
 
-- ?Donde estan ubicados los servidores que estan dando servicio por procolos no seguros
-- ?que tipo de servidores son
+- ¿Dónde estan ubicados los servidores que estan dando servicio por procolos no seguros?
+- ¿Qué tipo de servidores son?
+- ¿Los paises desarllados son más seguros a nivel de seguridad informatica que los subdesarollados?
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 # Definimos el directorio de trabajo
 
-knitr::opts_knit$set(root.dir = "/home/marti/Desktop/master_cybersecurity/4_Data_Driven_Security/LAB/spring19-group-assignment-marism")
-#knitr::opts_knit$set(root.dir = "/Users/ismael/Documents/MASTER/PRACTICA/spring19-group-assignment-marism")
+#knitr::opts_knit$set(root.dir = "/home/marti/Desktop/master_cybersecurity/4_Data_Driven_Security/LAB/spring19-group-assignment-marism")
+knitr::opts_knit$set(root.dir = "/Users/ismael/Documents/MASTER/PRACTICA/spring19-group-assignment-marism")
 verbose <- FALSE
 ```
 
 
-```{r load_packages, echo = FALSE, cache = TRUE}
+```{r load_packages, echo = FALSE, cache = TRUE, message=FALSE, include=FALSE}
 # Required Packages
 pkg <- c("R.utils", "iptools", "parallel", "dplyr", "jsonlite", "GroupAssignmentPackage", "mapproj", "kableExtra")
 
@@ -53,17 +54,20 @@ lapply(pkg, require, character.only = TRUE)
 
 Podemos descargar el fichero directamente de la web, muestras del puerto 80, no obstante este fichero descomprimido ocupa 170,70 GB y tardariamos horas en porderlo procesar integramente. Por ello hemos considerado trabajar con una parte significativa de las muestras.
 
-Para generar nuestro archivo realizamos las siguentes operaciones:
+Para generar nuestro archivo de pruebas realizamos las siguentes comando:
 
-`user@linux$ head -n 50  2019-04-22-1555944117-http_get_80.json > sample80_50.json`
+`user@linux$ head -n 5000  2019-04-22-1555944117-http_get_80.json > sample80_5K.json`
+
+Convertimos el fichero json en un dataframe, utilizando los siguiente comandos:
+
 ```{r sample, echo=TRUE, eval=FALSE}
-# > sample.file <- file.path(getwd(), "data", "sample80_50.json")
-# > lines <- readLines(sample.file)
-# > df.raw <- plyr::ldply(lines, function(x) as.data.frame(jsonlite::fromJSON(x), stringsAsFactors = FALSE))
-# > saveRDS(object = df.raw, file = file.path(getwd(), "data", "df_http_get_80_raw_50.rds"))
+sample.file <- file.path(getwd(), "data", "sample80_5K.json")
+lines <- readLines(sample.file)
+df.raw <- plyr::ldply(lines, function(x) as.data.frame(jsonlite::fromJSON(x), stringsAsFactors = FALSE))
+saveRDS(object = df.raw, file = file.path(getwd(), "data", "df_http_get_80_raw_5k.rds"))
 ```
 
-Si observamos detenidamente el fichero que con las muestras, podemos apreciar que la columan "data" tiene los datos cifrados en base64 y que algunas columnas tienen el contedido duplicado o que nos nos aporta nada al analisis que queremos realizar. 
+Si observamos detenidamente el fichero que con las muestras, podemos apreciar que la columan "data" tiene los datos cifrados en base64 y que algunas columnas tienen el contedido duplicado o no nos aporta ninguna información relevante para el analisis que queremos realizar. 
 
 Por ello descartamos la informacion de la columna ("host", "vhost" y "path").
 
@@ -77,9 +81,9 @@ df.raw[which(names(df.raw) == "path")] <- NULL
 str(df.raw)
 ```
 
-Procedemos a la descarga del Maxmind, con los siguiente campos de información:
+Procedemos a cargar o descargar el fichero Maxmind, con los siguiente comandos:
 
-```{r load_maxmind, echo = FALSE, cache = TRUE}
+```{r load_maxmind, echo = TRUE, cache = TRUE}
 # Get maxmind
 if ((!file.exists(file.path(getwd(), "data", "GeoLite2-City-Blocks-IPv4.csv")))){
   df.maxmind <- GroupAssignmentPackage::get.maxmind(verbose)
@@ -92,7 +96,16 @@ df.maxmind <- cbind(df.maxmind, iptools::range_boundaries(df.maxmind$network))
 df.maxmind$rowname <- as.integer(row.names(df.maxmind))
 ```
 
+En el fichero Maxmind obtenemos geolocalización de un rango de IP y por lado en el fichero de df_http_get_80_raw_5k.rds tenemos una única IP, el objetivo de este apartado es conseguir la geolocalización de esa IP. 
 
+Para poder comparar en que rango de IP cae esa IP y obtener la geolocalización, convertimos las IP en una variable numérica y vamos iterando hasta encontrar el rango en que el  IP es mayor o igual al valor máximo.
+
+
+El objetivo es saber cada IP de las muestras que 
+
+
+
+El contenido del fichero Maxmind, contienen la siguiente información:
 
 ```{r geolocate, echo = FALSE, cache = TRUE}
 if (!file.exists(file.path(getwd(), "data", "df_http_get_80_raw_geo_5k.rds"))){
@@ -106,7 +119,7 @@ str(df.raw.geo)
 ```
 
 
-Una vez aplicado todo el procesamiento de tratamiento de datos, es hora de mostrar los resultados. 
+Una vez aplicado todo el procesamiento y tratamiento de datos, es hora de mostrar los resultados. 
 
 Representando esta información con un gráfico de dispersión podemos ver que la distribución se asemeja notablemente al mapamundi:
 ```{r dispersion_coord, echo = FALSE, cache = TRUE, fig.align = 'center'}
