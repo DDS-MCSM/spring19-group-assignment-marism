@@ -30,15 +30,15 @@ El objetivo de este análisis se centra en responder las siguientes preguntas:
 knitr::opts_chunk$set(echo = FALSE)
 # Definimos el directorio de trabajo
 
-#knitr::opts_knit$set(root.dir = "/home/marti/Desktop/master_cybersecurity/4_Data_Driven_Security/LAB/spring19-group-assignment-marism")
-knitr::opts_knit$set(root.dir = "/Users/ismael/Documents/MASTER/PRACTICA/spring19-group-assignment-marism")
+# ".." is used because getwd() is executed inside vignettes directory
+knitr::opts_knit$set(root.dir = file.path(getwd(), ".."))
 verbose <- FALSE
 ```
 
 
-```{r load_packages, echo = FALSE, cache = TRUE, message=FALSE, include=FALSE}
+```{r load_packages, echo = FALSE, cache = TRUE, message = FALSE, include = FALSE}
 # Required Packages
-pkg <- c("R.utils", "iptools", "parallel", "dplyr", "jsonlite", "GroupAssignmentPackage", "mapproj", "kableExtra")
+pkg <- c("R.utils", "iptools", "parallel", "dplyr", "jsonlite", "GroupAssignmentPackage", "mapproj", "kableExtra", "ggplot2", "net.security")
 
 # Instalar paquetes que no esten instalados
 new.pkg <- pkg[!(pkg %in% installed.packages())]
@@ -61,7 +61,7 @@ Para generar nuestro archivo de pruebas realizamos las siguentes comando:
 Convertimos el fichero json en un dataframe, utilizando los siguiente comandos:
 
 ```{r sample, echo=TRUE, eval=FALSE}
-sample.file <- file.path(getwd(), "data", "sample80_5K.json")
+sample.file <- file.path(getwd(), "data", "sample80_5k.json")
 lines <- readLines(sample.file)
 df.raw <- plyr::ldply(lines, function(x) as.data.frame(jsonlite::fromJSON(x), stringsAsFactors = FALSE))
 saveRDS(object = df.raw, file = file.path(getwd(), "data", "df_http_get_80_raw_5k.rds"))
@@ -84,16 +84,18 @@ str(df.raw)
 Procedemos a cargar o descargar el fichero Maxmind, con los siguiente comandos:
 
 ```{r load_maxmind, echo = TRUE, cache = TRUE}
-# Get maxmind
-if ((!file.exists(file.path(getwd(), "data", "GeoLite2-City-Blocks-IPv4.csv")))){
-  df.maxmind <- GroupAssignmentPackage::get.maxmind(verbose)
-} else {
-  maxmind.source <- file.path(getwd(), "data", "GeoLite2-City-Blocks-IPv4.csv")
-  df.maxmind <- read.csv(maxmind.source, stringsAsFactors = FALSE)
+# Get maxmind only if pre-computed raw_geo file is not present
+if (!file.exists(file.path(getwd(), "data", "df_http_get_80_raw_geo_5k.rds"))) {
+  if ((!file.exists(file.path(getwd(), "data", "GeoLite2-City-Blocks-IPv4.csv")))){
+    df.maxmind <- GroupAssignmentPackage::get.maxmind(verbose)
+  } else {
+    maxmind.source <- file.path(getwd(), "data", "GeoLite2-City-Blocks-IPv4.csv")
+    df.maxmind <- read.csv(maxmind.source, stringsAsFactors = FALSE)
+  }
+  # Expanding MaxMind network ranges
+  df.maxmind <- cbind(df.maxmind, iptools::range_boundaries(df.maxmind$network))
+  df.maxmind$rowname <- as.integer(row.names(df.maxmind))
 }
-# Expanding MaxMind network ranges
-df.maxmind <- cbind(df.maxmind, iptools::range_boundaries(df.maxmind$network))
-df.maxmind$rowname <- as.integer(row.names(df.maxmind))
 ```
 
 En el fichero Maxmind obtenemos geolocalización de un rango de IP y por lado en el fichero de df_http_get_80_raw_5k.rds tenemos una única IP, el objetivo de este apartado es conseguir la geolocalización de esa IP. 
@@ -167,7 +169,16 @@ df <- GroupAssignmentPackage::parse.headers(df.raw.geo)
 
 Podemos ver las versiones utilizadas de HTTP
 ```{r kable, echo=FALSE, cache=TRUE}
-kable(plyr::count(df$version)) %>%
+kable(plyr::count(df$http.version)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+Y los tipos de respuesta
+```{r kable, echo=FALSE, cache=TRUE}
+http.status.number <- sapply(df$http.status, function(x) unlist(strsplit(x, " ", useBytes = TRUE))[2])
+http.status.number <- plyr::count(http.status.number)
+ordered.status <- http.status.number[with(http.status.number, order(-freq)), ]
+kable(ordered.status) %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
@@ -183,10 +194,10 @@ gg <- gg + geom_path(aes(group=group), colour="gray70")
 # La definici?n de la proyeccion representa la "curvatura" del mapa
 gg <- gg + coord_map("mercator", xlim=c(-200, 200))
 # Añadimos una capa al mapa con la informacion
-gg <- gg + geom_point(data = dplyr::filter(df, grepl('HTTP/1.0', version)), aes(longitude, latitude),
+gg <- gg + geom_point(data = dplyr::filter(df, grepl('HTTP/1.0', http.version)), aes(longitude, latitude),
                       colour="blue", alpha=1/40, size=1)
 
-gg <- gg + geom_point(data = dplyr::filter(df, grepl('HTTP/1.1', version)), aes(longitude, latitude),
+gg <- gg + geom_point(data = dplyr::filter(df, grepl('HTTP/1.1', http.version)), aes(longitude, latitude),
                       colour="red", alpha=1/40, size=1)
 # Eliminamos texto y le damos un poco de color
 gg <- gg + theme(text=element_blank(), 
@@ -204,16 +215,24 @@ head(ordered_servers, 20)
 ```
 
 ```{r main_servers, echo=FALSE, cache=TRUE}
-apache <- servers[grep("Apache", servers$x), ]
-sum_apache <- sum(apache$freq)
-nginx <- servers[grep("nginx", servers$x), ]
-sum_nginx <- sum(nginx$freq)
-win <- servers[grep("Microsoft", servers$x), ]
-sum_win <- sum(win$freq)
+servers.apache <- servers[grep("Apache", servers$x), ]
+sum_apache <- sum(servers.apache$freq)
+servers.nginx <- servers[grep("nginx", servers$x), ]
+sum_nginx <- sum(servers.nginx$freq)
+servers.win <- servers[grep("Microsoft", servers$x), ]
+sum_win <- sum(servers.win$freq)
 ```
 
-Get CVES from net.security package
-```
-cves <- net.security::GetDataFrame("cves")
-cves.apache <- cves[grep("apache", cves$affects), ]
+
+Get CVEs and CPEs from net.security package
+```{r cve_cpe, echo=FALSE, cache=TRUE}
+# net.security::DataSetUpdate(samples = T, use.remote = F)
+
+#cpes <- net.security::GetDataFrame("cpes")
+#a <- cpes[grep("Apache/2.4.18", cpes$title), ]
+#cpes.apache <- cpes[grepl("apache", cpes$vendor), ]
+
+#cves <- net.security::GetDataFrame("cves")
+#cves.apache <- cves[grep("apache", cves$affects), ]
+#cves.nginx <- cves[grep("nginx", cves$affects), ]
 ```
