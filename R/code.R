@@ -288,9 +288,9 @@ parse.headers <- function(df.raw) {
   df.raw$headers <- sapply(df.raw$headers, function(d) unlist(strsplit(d, '\r\n', useBytes = TRUE)))
 
   # First line: version and status
-  df.raw$status <- sapply(df.raw$headers, function(d) d[1])
-  df.raw$status <- enc2utf8(df.raw$status)
-  df.raw$version <- sapply(df.raw$status, function(d) substr(d, 1, 8))
+  df.raw$http.status <- sapply(df.raw$headers, function(d) d[1])
+  df.raw$http.status <- enc2utf8(df.raw$http.status)
+  df.raw$http.version <- sapply(df.raw$http.status, function(d) substr(d, 1, 8))
   # Delete first line (http version and status) of headers
   df.raw$headers <- sapply(df.raw$headers, function(d) tail(d, length(d) - 1))
 
@@ -306,8 +306,9 @@ parse.headers <- function(df.raw) {
   # Delete last space added
   df.raw$server <- sapply(df.raw$server, function(x) gsub(" $","", x))
 
-  df.raw$cpe22 <- mapply(x = df.raw$vendor, y = df.raw$version, FUN = function(x, y) get.cpe(x, y, 22))
-  df.raw$cpe23 <- mapply(x = df.raw$vendor, y = df.raw$version, FUN = function(x, y) get.cpe(x, y, 23))
+  df.raw$vendor <- sapply(df.raw$server, function(x) unlist(strsplit(x, "/", useBytes = TRUE))[1])
+  df.raw$version <- sapply(df.raw$server, function(x) unlist(strsplit(x, "/", useBytes = TRUE))[2])
+  df.raw$version <- sapply(df.raw$version, function(x) unlist(strsplit(x, " ", useBytes = TRUE))[1])
 
   return(df.raw)
 }
