@@ -121,7 +121,7 @@ Como se puede apreciar hemos juntado la parte del maxmaind que nos aporta datos 
 Una vez aplicado todo el procesamiento y tratamiento de datos, es hora de mostrar los resultados. 
 
 Representando esta información con un gráfico de dispersión podemos ver que la distribución se asemeja notablemente al mapamundi:
-```{r dispersion_coord, echo = FALSE, cache = TRUE, fig.align = 'center'}
+```{r dispersion_coord, echo = FALSE, cache = TRUE, fig.align = 'center', warning = FALSE}
 library(ggplot2)
 # Creamos ggplot con los datos de symantec
 gg <- ggplot(data = df.raw.geo, aes(x = longitude, y = latitude)) 
@@ -136,7 +136,7 @@ print(gg)
 ```
 
 Añadimos información sobre paises y sus fronteras para enriquecer el mapa.
-```{r map_simple, echo=FALSE, cache=TRUE, fig.align='center'}
+```{r map_simple, echo=FALSE, cache=TRUE, fig.align='center', warning = FALSE}
 world <- map_data("world")
 # Quitamos el continete Antarctico ya que no aporta informaci?n
 # No es nada personal con los pinguinos...
@@ -177,7 +177,7 @@ En ambas versiones tanto las respuestas como las peticiones se realizan a travé
 Podemos ver el numero de  versiones utilizadas de HTTP:
 ```{r kable.version, echo=FALSE, cache=TRUE}
 kable(plyr::count(df$http.version)) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
 
 
@@ -186,12 +186,13 @@ Y los tipos de respuesta:
 http.status.number <- sapply(df$http.status, function(x) unlist(strsplit(x, " ", useBytes = TRUE))[2])
 http.status.number <- plyr::count(http.status.number)
 ordered.status <- http.status.number[with(http.status.number, order(-freq)), ]
+row.names(ordered.status) <- NULL
 kable(ordered.status) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
 
 En azul la versión 1.0 y en rojo la 1.1
-```{r map_version, echo=FALSE, cache=TRUE, fig.align='center'}
+```{r map_version, echo=FALSE, cache=TRUE, fig.align='center', warning = FALSE}
 world <- map_data("world")
 # Quitamos el continete Antarctico ya que no aporta informaci?n
 # No es nada personal con los pinguinos...
@@ -216,21 +217,23 @@ gg <- gg + theme(text=element_blank(),
 print(gg)
 ```
 
-De todos los resultados que hemos obtenido, los agrupamos per tipologia de servidor y mostramos los 20 primeros que contengan más resultados:
+De todos los resultados que hemos obtenido, los agrupamos per servidor y mostramos los 20 primeros que contengan más resultados:
 
 ```{r servers, echo=FALSE, cache=TRUE}
 servers <- plyr::count(unlist(df$server))
-ordered_servers <- servers[with(servers, order(-freq)), ]
-head(ordered_servers, 20)
+ordered.servers <- servers[with(servers, order(-freq)), ]
+row.names(ordered.servers) <- NULL
+kable(head(ordered.servers, 20)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
-Filtramos por el tipo de servidor independientemente de la versión:
-```{r main_servers, echo=FALSE, cache=TRUE}
-servers.apache <- servers[grep("Apache", servers$x), ]
-sum_apache <- sum(servers.apache$freq)
-servers.nginx <- servers[grep("nginx", servers$x), ]
-sum_nginx <- sum(servers.nginx$freq)
-servers.win <- servers[grep("Microsoft", servers$x), ]
-sum_win <- sum(servers.win$freq)
+
+Filtramos por el tipo de servidor independientemente de la versión y observamos que la mayoria se concentran en los cinco primeros:
+```{r vendors, echo=FALSE, cache=TRUE}
+vendors <- plyr::count(unlist(df$vendor))
+ordered.vendors <- vendors[with(vendors, order(-freq)), ]
+row.names(ordered.vendors) <- NULL
+kable(head(ordered.vendors, 10)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
 
 Buscamos las realiación que hay entre el servidor, CPE y CVE, para obtener la criticidad de las vulnerabilidades.
