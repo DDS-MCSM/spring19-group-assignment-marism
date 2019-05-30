@@ -238,8 +238,20 @@ kable(head(ordered.vendors, 10)) %>%
 
 Buscamos las realiación que hay entre el servidor, CPE y CVE, para obtener la criticidad de las vulnerabilidades.
 
-Get CVEs and CPEs from net.security package
-```{r cve_cpe, echo=FALSE, cache=TRUE}
+A partir de la información del servidor, parseamos los datos del vendor y la versión y obtenemos el CPE equivalente:
+```{r cpes, echo=FALSE, cache=TRUE}
+# All cpe22 are actually cpe23, so no need to load them
+if (!file.exists(file.path(getwd(), "data", "cpes.rds"))) {
+  library(net.security)
+  #df$cpe22 <- mapply(x = df$vendor, y = df$version, FUN = function(x, y) GroupAssignmentPackage::get.cpe(x, y, 22))
+  df$cpe23 <- mapply(x = df$vendor, y = df$version, FUN = function(x, y) GroupAssignmentPackage::get.cpe(x, y, 23))
+} else {
+  cpes <- readRDS(file.path(getwd(), "data", "cpes.rds"))
+  #df$cpe22 <- mapply(x = df$vendor, y = df$version, FUN = function(x, y) GroupAssignmentPackage::get.cpe(x, y, 22, cpes))
+  df$cpe23 <- mapply(x = df$vendor, y = df$version, FUN = function(x, y) GroupAssignmentPackage::get.cpe(x, y, 23, cpes))
+}
+
+
 # net.security::DataSetUpdate(samples = T, use.remote = F)
 
 #cpes <- net.security::GetDataFrame("cpes")
