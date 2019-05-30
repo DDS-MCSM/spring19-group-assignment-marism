@@ -175,14 +175,14 @@ Se incluian  verbos GET,POST,PUT,DELETE,etc y la web se empezaba a orientar a re
 En ambas versiones tanto las respuestas como las peticiones se realizan a través de texto plano.
 
 Podemos ver el numero de  versiones utilizadas de HTTP:
-```{r kable, echo=FALSE, cache=TRUE}
+```{r kable.version, echo=FALSE, cache=TRUE}
 kable(plyr::count(df$http.version)) %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
 
 Y los tipos de respuesta:
-```{r kable, echo=FALSE, cache=TRUE}
+```{r kable.status, echo=FALSE, cache=TRUE}
 http.status.number <- sapply(df$http.status, function(x) unlist(strsplit(x, " ", useBytes = TRUE))[2])
 http.status.number <- plyr::count(http.status.number)
 ordered.status <- http.status.number[with(http.status.number, order(-freq)), ]
