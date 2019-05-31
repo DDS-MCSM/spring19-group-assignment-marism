@@ -201,7 +201,11 @@ kable(ordered.status) %>%
 
 En azul la versión 1.0 y en rojo la 1.1
 ```{r map_version2, echo=FALSE, cache=TRUE, warning = FALSE}
-m <- leaflet(df) %>% addTiles() %>% addCircles(lng = ~longitude, lat = ~latitude, color = ~ifelse(http.version == 'HTTP/1.0', "blue", "red"))
+pal <- colorFactor(
+  palette = c('blue', 'red'),
+  domain = c('HTTP/1.0', 'HTTP/1.1')
+)
+m <- leaflet(df) %>% addTiles() %>% addCircles(lng = ~longitude, lat = ~latitude, color = ~ifelse(http.version == 'HTTP/1.0', "blue", "red")) %>% addLegend("bottomright", pal = pal, values = c('HTTP/1.0', 'HTTP/1.1'), title = "HTTP version", opacity = 1)
 m
 ```
 
@@ -216,14 +220,27 @@ kable(head(ordered.servers, 20)) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
 
-Filtramos por el tipo de servidor independientemente de la versión y observamos que la mayoria se concentran en los cinco primeros:
-```{r vendors, echo=FALSE, cache=TRUE}
+Filtramos por el tipo de servidor independientemente de la versión y observamos que la mayoria se concentran en los primeros:
+```{r vendors, echo=FALSE, cache=TRUE, warning = FALSE}
 vendors <- plyr::count(unlist(df$vendor))
 ordered.vendors <- vendors[with(vendors, order(-freq)), ]
 names(ordered.vendors) <- c("Vendor", "freq")
 row.names(ordered.vendors) <- NULL
-kable(head(ordered.vendors, 10)) %>%
+kable(head(ordered.vendors, 11)) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+pal <- colorFactor(
+  palette = c('orange', 'red', 'blue', 'green'),
+  domain = c('Apache', 'Microsoft-IIS', 'nginx', 'AkamaiGHost')
+)
+m <- leaflet() %>%
+  addTiles() %>%
+  addCircles(lat=subset(df, vendor=='Apache')$lat, lng=subset(df,vendor=='Apache')$lon, color= "red") %>%
+  addCircles(lat=subset(df, vendor=='Microsoft-IIS')$lat, lng=subset(df,vendor=='Microsoft-IIS')$lon, color= "blue") %>%
+  addCircles(lat=subset(df, vendor=='nginx')$lat, lng=subset(df,vendor=='nginx')$lon, color= "green") %>%
+  addCircles(lat=subset(df, vendor=='AkamaiGHost')$lat, lng=subset(df,vendor=='AkamaiGHost')$lon, color= "orange") %>%
+  addLegend("bottomright", pal = pal, values = c('Apache', 'Microsoft-IIS', 'nginx', 'AkamaiGHost'), title = "Main server vendors", opacity = 1)
+m
 ```
 
 Buscamos las realiación que hay entre el servidor, CPE y CVE, para obtener la criticidad de las vulnerabilidades.
