@@ -281,7 +281,8 @@ m <- leaflet() %>%
   addLegend("bottomright", pal = pal, values = c('Apache', 'Microsoft-IIS', 'nginx', 'AkamaiGHost'), title = "Main server vendors", opacity = 1)
 m
 ```
-### Relación con CPE
+
+## Relación con CPE
 
 Buscamos las realiación que hay entre el servidor y versión con un CPE.
 
@@ -299,7 +300,8 @@ if (!file.exists(file.path(getwd(), "data", "cpes.rds"))) {
 }
 ```
 
-List of most CPE mached
+Mostramos el listados de los CPE para los cuales hemos encontrado coincidencia:
+
 ```{r kable_cpe, echo=FALSE, cache=TRUE}
 cpes.match <- plyr::count(unlist(df$cpe23))
 cpes.match[] <- lapply(cpes.match, function(x) if (is.factor(x)) as.character(x) else {x})
@@ -311,7 +313,6 @@ row.names(cpes.match) <- NULL
 kable(head(cpes.match, 10)) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
-
 
 Relación con CVE, para obtener la criticidad de las vulnerabilidades.
 
@@ -341,9 +342,86 @@ df.cves$score.cvss2[df.cves$score.cvss2=='NULL'] <- NA
 df.cves$score.cvss3[df.cves$score.cvss3=='NULL'] <- NA
 ```
 
+Mostramos los servidores, en su geolocalización mostrando únicamente aquellos que hemos encontrado alguna valor de criticidad.
+
+Contra más oscuro es el punto mayor citicidad tiene:
+
 ```{r map_cves, echo=FALSE, cache=TRUE, warning = FALSE}
 m <- leaflet() %>%
   addTiles() %>%
   addCircles(lat=subset(df.cves,num.cve>0)$lat, lng=subset(df.cves,num.cve>0)$lon, color= "red")
 m
 ```
+
+Miramos los resultado a nivel de pais, ya que con el anterior gráfico es difícil de llegar a comprender que paises tienen mas vulnerabilidades, que otros.
+
+Para ello usaremos un mapa de tipo ***choropleth***, que básicamente significa pintar los paises con colores.
+
+```{r map_choropleth, echo = FALSE, cache = TRUE, fig.align = 'center'}
+library(maps)
+library(maptools)
+# peque?a modificaci?n de la version de (@rweald)
+# https://gist.github.com/rweald/4720788
+latlong2map <- function(pointsDF, mapping) {
+  # load up the map data
+  local.map <- map(mapping, fill=TRUE, col="transparent", plot=FALSE)
+  # pull out the IDs from the name
+  IDs <- sapply(strsplit(local.map$names, ":"), function(x) x[1])
+  # Prepare SpatialPolygons object 
+  maps_sp <- map2SpatialPolygons(local.map, IDs=IDs,
+                                 proj4string=CRS("+proj=longlat +datum=wgs84"))
+  # Convert pointsDF to a SpatialPoints object
+  pointsSP <- SpatialPoints(pointsDF,
+                            proj4string=CRS("+proj=longlat +datum=wgs84"))
+  # Use 'over' to get _indices_ of the Polygons object containing each point
+  indices <- over(pointsSP, maps_sp)
+  # Return the names of the Polygons object containing each point
+  mapNames <- sapply(maps_sp@polygons, function(x) x@ID)
+  # now return a vector of names that match the points
+  mapNames[indices]
+}
+
+# Esta funcion devuelve un vector con los nombres de los paises, de esta forma
+# se puede contar cuantas veces aparece un pais con la funcion table()
+# Lo que hay que hacer es transformar la informaci?n de lat/long a nombre de pais
+
+zworld <- latlong2map(data.frame(x=df.cves$longitude, y=df.cves$latitude), "world")
+# cuenta los puntos en un pais y lo convierte en data frame
+wct <- data.frame(table(zworld))
+# definimos los nombres de la variables
+colnames(wct) <- c("region", "count")
+# la funcion merge se realiza por "region" al hacer match
+za.choro <- merge(world, wct)
+# ordenamos el mapa
+za.choro <- za.choro[with(za.choro, order(group, order)), ]
+# y lo "pintamos"
+gg <- ggplot(za.choro, aes(x=long, y=lat, group=group, fill=count))
+gg <- gg + geom_path(colour="#666666") + geom_polygon()
+gg <- gg + coord_map("mercator", xlim=c(-200, 200), ylim=c(-60,200))
+gg <- gg + scale_fill_gradient2(low="#FFFFFF", high="#4086AA", 
+                                midpoint=median(za.choro$count),
+                                name="Vulnerabilidad")
+# Eliminamos texto y le damos un poco de color
+gg <- gg + theme(axis.title=element_blank(), 
+                 axis.text=element_blank(),
+                 axis.ticks=element_blank(),
+                 panel.grid=element_blank(),
+                 panel.background=element_rect(color="gray50",
+                                               fill="white"))
+print(gg)
+```
+
+
+Normalizamos los resultado por el numero de servidores que hay en cada región: 
+
+
+
+
+
+
+
+
+
+Lo correlacionamos con los datos del PIB:
+
+
