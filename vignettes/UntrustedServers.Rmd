@@ -4,7 +4,7 @@ author: "Martí Barri and Ismael López"
 date: "5/25/2019"
 output: html_document
 ---
-# Análisis de los servidores que ofrecen servicio por protocolos no seguros
+# Análisis de respuestas HTTP y de sus servidores
 
 ## Resumen
 Este informe se centra en realiza un estudio de los tipos de servidores que estan ofreciendo respuesta por protocolos no seguro. 
@@ -17,7 +17,7 @@ Adjuntamos el detalle de los enlaces:
 - [HTTP GET Responses](https://opendata.rapid7.com/sonar.http/)
 - [MaxMind IP Geolocation](https://dev.maxmind.com/geoip/geoip2/geolite2/)
 
-# Objetivos 
+## Objetivos 
 
 El objetivo de este análisis se centra en responder las siguientes preguntas:
 
@@ -38,7 +38,7 @@ verbose <- FALSE
 
 ```{r load_packages, echo = FALSE, cache = TRUE, message = FALSE, include = FALSE}
 # Required Packages
-pkg <- c("R.utils", "iptools", "parallel", "dplyr", "jsonlite", "GroupAssignmentPackage", "mapproj", "kableExtra", "ggplot2", "leaflet", "net.security")
+pkg <- c("R.utils", "iptools", "parallel", "dplyr", "jsonlite", "GroupAssignmentPackage", "mapproj", "kableExtra", "ggplot2", "leaflet", "net.security", "RColorBrewer")
 
 # Instalar paquetes que no esten instalados
 new.pkg <- pkg[!(pkg %in% installed.packages())]
@@ -74,19 +74,23 @@ Por ello descartamos la informacion de la columna ("host", "vhost" y "path").
 La información del dataframe que nos interesa es la siguiente:
 
 ```{r load_response_data, echo = FALSE, cache = TRUE}
-df.raw <- readRDS(file.path(getwd(), "data", "df_http_get_80_raw_5k.rds"))
+source.file <- "df_http_get_80_raw_5k.rds"
+source.file.geo <- "df_http_get_80_raw_geo_5k.rds"
+df.raw <- readRDS(file.path(getwd(), "data", source.file))
 df.raw[which(names(df.raw) == "host")] <- NULL
 df.raw[which(names(df.raw) == "vhost")] <- NULL
 df.raw[which(names(df.raw) == "path")] <- NULL
 str(df.raw)
 ```
 
+## Geolocalización
+
 Procedemos a cargar o descargar el fichero Maxmind, con los siguiente comandos:
 
 ```{r load_maxmind, echo = TRUE, cache = TRUE}
 # Get maxmind only if pre-computed raw_geo file is not present
-if (!file.exists(file.path(getwd(), "data", "df_http_get_80_raw_geo_5k.rds"))) {
-  if ((!file.exists(file.path(getwd(), "data", "GeoLite2-City-Blocks-IPv4.csv")))){
+if (!file.exists(file.path(getwd(), "data", source.file.geo))) {
+  if ((!file.exists(file.path(getwd(), "data", "GeoLite2-City-Blocks-IPv4.csv")))) {
     df.maxmind <- GroupAssignmentPackage::get.maxmind(verbose)
   } else {
     maxmind.source <- file.path(getwd(), "data", "GeoLite2-City-Blocks-IPv4.csv")
@@ -107,15 +111,16 @@ Al realizar esta iteración se consumen mucho tiempo, por ello hemos intentado p
 El fichero resultmate de todas estas iteraciones es el siguiente:
 
 ```{r geolocate, echo = FALSE, cache = TRUE}
-if (!file.exists(file.path(getwd(), "data", "df_http_get_80_raw_geo_5k.rds"))){
+if (!file.exists(file.path(getwd(), "data", source.file.geo))){
   df.raw <- GroupAssignmentPackage::add.numeric.ip(df.raw, "ip")
   df.raw.geo <- GroupAssignmentPackage::geolocate.http.responses(df.maxmind, df.raw)
 } else {
-  df.raw.geo <- readRDS(file.path(getwd(), "data", "df_http_get_80_raw_geo_5k.rds"))
+  df.raw.geo <- readRDS(file.path(getwd(), "data", source.file.geo))
 }
 rm(df.raw)
 str(df.raw.geo)
 ```
+
 Como se puede apreciar hemos juntado la parte del maxmaind que nos aporta datos de la geolocalizacion (latiude, longitude, accuracy_radius) al fichero de muestras que teneiamos incialmente.
 
 Una vez aplicado todo el procesamiento y tratamiento de datos, es hora de mostrar los resultados. 
@@ -164,6 +169,7 @@ m <- leaflet(df.raw.geo) %>% addTiles() %>% addCircles(lng = ~longitude, lat = ~
 m
 ```
 
+## Decodificación
 
 Después de ver la localización de los servidores, vamos a decodificar los datos y a parsear los headers para obtener información más detallada.
 ```{r parse_headers, echo=FALSE, cache=TRUE}
@@ -180,26 +186,16 @@ Se incluian  verbos GET,POST,PUT,DELETE,etc y la web se empezaba a orientar a re
 
 En ambas versiones tanto las respuestas como las peticiones se realizan a través de texto plano.
 
-Podemos ver el numero de  versiones utilizadas de HTTP:
-```{r kable.version, echo=FALSE, cache=TRUE}
+Podemos ver el número de  versiones utilizadas de HTTP y su geolocalización:
+```{r kable.version, echo=FALSE, cache=TRUE, fig.align='center'}
 count.version <- plyr::count(df$http.version)
 names(count.version) <- c("HTTP version", "freq")
-kable(count.version) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+#kable(count.version) %>%
+#  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+pie(as.integer(count.version$freq ), count.version$`HTTP version`, col = colorRampPalette(brewer.pal(3,"Dark2"))(length(count.version$freq)), main = "HTTP version")
+
 ```
 
-
-Y los tipos de respuesta:
-```{r kable.status, echo=FALSE, cache=TRUE}
-http.status.number <- sapply(df$http.status, function(x) unlist(strsplit(x, " ", useBytes = TRUE))[2])
-http.status.number <- plyr::count(http.status.number)
-ordered.status <- http.status.number[with(http.status.number, order(-freq)), ]
-row.names(ordered.status) <- NULL
-kable(ordered.status) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
-```
-
-En azul la versión 1.0 y en rojo la 1.1
 ```{r map_version2, echo=FALSE, cache=TRUE, warning = FALSE}
 pal <- colorFactor(
   palette = c('blue', 'red'),
@@ -209,10 +205,22 @@ m <- leaflet(df) %>% addTiles() %>% addCircles(lng = ~longitude, lat = ~latitude
 m
 ```
 
+También podemos ver los tipos de respuesta:
+```{r kable.status, echo=FALSE, cache=TRUE, fig.align='center'}
+http.status.number <- sapply(df$http.status, function(x) unlist(strsplit(x, " ", useBytes = TRUE))[2])
+http.status.number <- plyr::count(http.status.number)
+ordered.status <- http.status.number[with(http.status.number, order(-freq)), ]
+names(ordered.status) <- c("HTTP status code", "freq")
+row.names(ordered.status) <- NULL
+pie(as.integer(ordered.status$freq ), ordered.status$`HTTP status code`[which(ordered.status$freq > 50)], col = colorRampPalette(brewer.pal(8,"Dark2"))(length(ordered.status$freq)), main = "HTTP status code")
+```
+
+
 De todos los resultados que hemos obtenido, los agrupamos per servidor y mostramos los 20 primeros que contengan más resultados:
 
 ```{r servers, echo=FALSE, cache=TRUE}
 servers <- plyr::count(unlist(df$server))
+servers <- servers[-which(servers$x == "" | servers$x == " " | is.na(servers$x)), ] # Delete empty values
 ordered.servers <- servers[with(servers, order(-freq)), ]
 names(ordered.servers) <- c("Server", "freq")
 row.names(ordered.servers) <- NULL
@@ -223,6 +231,7 @@ kable(head(ordered.servers, 20)) %>%
 Filtramos por el tipo de servidor independientemente de la versión y observamos que la mayoria se concentran en los primeros:
 ```{r vendors, echo=FALSE, cache=TRUE, warning = FALSE}
 vendors <- plyr::count(unlist(df$vendor))
+vendors <- vendors[-which(vendors$x == "" | vendors$x == " " | is.na(vendors$x)), ] # Delete empty values
 ordered.vendors <- vendors[with(vendors, order(-freq)), ]
 names(ordered.vendors) <- c("Vendor", "freq")
 row.names(ordered.vendors) <- NULL
@@ -243,9 +252,11 @@ m <- leaflet() %>%
 m
 ```
 
-Buscamos las realiación que hay entre el servidor, CPE y CVE, para obtener la criticidad de las vulnerabilidades.
+### Relación con CPE
 
-A partir de la información del servidor, parseamos los datos del vendor y la versión y obtenemos el CPE equivalente:
+Buscamos las realiación que hay entre el servidor y versión con un CPE.
+
+A partir de la información del servidor, parseamos los datos del vendor y la versión y obtenemos el CPE correspondiente:
 ```{r cpes, echo=FALSE, cache=TRUE}
 # All cpe22 are actually cpe23, so no need to load them
 if (!file.exists(file.path(getwd(), "data", "cpes.rds"))) {
@@ -259,6 +270,19 @@ if (!file.exists(file.path(getwd(), "data", "cpes.rds"))) {
 }
 ```
 
+List of most CPE mached
+```{r kable_cpe, echo=FALSE, cache=TRUE}
+cpes.match <- plyr::count(unlist(df$cpe23))
+cpes.match <- cpes.match[-which(is.na(cpes.match$x)), ] # Delete empty values
+cpes.match <- cpes.match[with(cpes.match, order(-freq)), ]
+names(cpes.match) <- c("CPE", "freq")
+row.names(cpes.match) <- NULL
+kable(head(cpes.match, 10)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+
+Relación con CVE, para obtener la criticidad de las vulnerabilidades.
 
 ```{r cves, echo=FALSE, cache=TRUE}
 # if (!file.exists(file.path(getwd(), "data", "cves.rds"))) {
