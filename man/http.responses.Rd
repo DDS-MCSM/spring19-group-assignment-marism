@@ -13,6 +13,9 @@ http.responses(port = 80, rows = 50, verbose = TRUE)
 
 \item{verbose}{Si queremos mostrar por consola más información de las operaciones que va realizando}
 }
+\value{
+df Dataframe con las 50 muestras
+}
 \description{
 Función que utiliza el fichero usado en el informe Rmd
 }

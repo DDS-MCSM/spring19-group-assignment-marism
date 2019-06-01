@@ -7,7 +7,9 @@
 geolocate.http.responses(df.maxmind, df.raw)
 }
 \arguments{
-\item{df.raw}{}
+\item{df.maxmind}{Dataframe Maxmind con la geolocalización}
+
+\item{df.raw}{Dataframe con las muestras}
 }
 \value{
 df.raw.geo

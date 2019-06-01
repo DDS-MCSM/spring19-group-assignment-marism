@@ -6,6 +6,9 @@
 \usage{
 parse.headers(df.raw)
 }
+\arguments{
+\item{df.raw}{Data frame con las muestras}
+}
 \value{
 parsed df
 }

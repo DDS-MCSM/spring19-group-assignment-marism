@@ -7,7 +7,13 @@
 get.cpe(vendor, version, cpe.version = 22, cpes = NULL)
 }
 \arguments{
-\item{cpes}{}
+\item{vendor}{Fabricante}
+
+\item{version}{Version}
+
+\item{cpe.version}{Version del cpe}
+
+\item{cpes}{dataframe con los cpe}
 }
 \value{
 cpe

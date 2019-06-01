@@ -198,8 +198,8 @@ join.tidy.data <- function(df.maxmind, df.scans) {
 
 #' @title Geolocate ip address using maxmind
 #' @description Used in UntrustedServers.Rmd
-#' @param df.maxmind
-#' @param df.raw
+#' @param df.maxmind Dataframe Maxmind con la geolocalización
+#' @param df.raw Dataframe con las muestras
 #'
 #' @return df.raw.geo
 #' @export
@@ -229,10 +229,10 @@ geolocate.http.responses <- function(df.maxmind, df.raw) {
 #' @title Return cpe22 or cpe23 from vendor and version
 #' @description Requiered net.security package updated.
 #'
-#' @param vendor
-#' @param version
-#' @param cpe.version
-#' @param cpes
+#' @param vendor Fabricante
+#' @param version Version
+#' @param cpe.version Version del cpe
+#' @param cpes dataframe con los cpe
 #'
 #' @return cpe
 #' @export
@@ -269,7 +269,7 @@ get.cpe <- function(vendor, version, cpe.version = 22, cpes = NULL) {
 
 #' @title Parsing headers of dataframe with data column encoded in base64
 #' @description Decode data in base64, extract headers, status, http version and server
-#' @param df.raw
+#' @param df.raw Data frame con las muestras
 #' @return parsed df
 #' @export
 parse.headers <- function(df.raw) {
@@ -319,7 +319,7 @@ parse.headers <- function(df.raw) {
 #' @param port Nos indica el puerto del que estamos realizando el analisis
 #' @param rows Filas que queremos extraer
 #' @param verbose Si queremos mostrar por consola más información de las operaciones que va realizando
-#' @return
+#' @return df Dataframe con las 50 muestras
 #' @export
 http.responses <- function(port=80, rows=50, verbose=TRUE) {
 
