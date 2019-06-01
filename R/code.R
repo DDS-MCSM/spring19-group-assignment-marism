@@ -258,9 +258,9 @@ get.cpe <- function(vendor, version, cpe.version = 22, cpes = NULL) {
     row <- cpes[i,]
   }
   if (cpe.version == 22 & nrow(row) != 0) {
-    return(row$cpe.22)
+    return(head(row$cpe.22, 1)) # only return the first match
   } else if (cpe.version == 23 & nrow(row) != 0) {
-    return(row$cpe.23)
+    return(head(row$cpe.23, 1)) # only return the first match
   } else {
     return(NA)
   }
