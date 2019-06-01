@@ -267,6 +267,41 @@ get.cpe <- function(vendor, version, cpe.version = 22, cpes = NULL) {
 }
 
 
+#' @title Return data frame of CVEs for a specific CPE
+#'
+#' @param cpe CPE
+#' @param cves dataframe with cves
+#'
+#' @return score
+#' @export
+get.cve <- function(cpe, cves = NULL) {
+  if (is.null(cves)) { # Default file
+    cves <- net.security::GetDataFrame("cves")
+  }
+  cves.found <- cves[grep(cpe, cves$vulnerable.configuration), ]
+  return(cves.found)
+}
+
+
+#' @title Return cpe22 or cpe23 from vendor and version
+#'
+#' @param df.cve data frame with list of CVEs
+#' @param cvss CVSS version. 2 or 3
+#'
+#' @return score
+#' @export
+get.score <- function(df.cve, cvss = 2) {
+  if (nrow(df.cve) == 0) {
+    return(0)
+  }
+  if (cvss == 2) {
+    score <- (sum(df.cve$cvss2.score) + sum(df.cve$cvss2.score.exploit) + sum(df.cve$cvss2.score.impact)) / nrow(df.cve)
+  } else if (cvss == 3) {
+    score <- (sum(df.cve$cvss3.score) + sum(df.cve$cvss3.score.exploit) + sum(df.cve$cvss3.score.impact)) / nrow(df.cve)
+  }
+  return(score)
+}
+
 #' @title Parsing headers of dataframe with data column encoded in base64
 #' @description Decode data in base64, extract headers, status, http version and server
 #' @param df.raw Data frame con las muestras
