@@ -276,7 +276,7 @@ cpes.match <- plyr::count(unlist(df$cpe23))
 cpes.match[] <- lapply(cpes.match, function(x) if (is.factor(x)) as.character(x) else {x})
 cpes.match <- cpes.match[-which(is.na(cpes.match$x)), ] # Delete empty values
 cpes.match <- cpes.match[with(cpes.match, order(-freq)), ]
-names(cpes.match) <- c("CPE", "freq")
+names(cpes.match) <- c("cpe23", "freq")
 main.cpes <- head(cpes.match, 50)
 row.names(cpes.match) <- NULL
 kable(head(cpes.match, 10)) %>%
@@ -296,8 +296,25 @@ if (!file.exists(file.path(getwd(), "data", "cves.rds"))) {
 }
 
 # Match only main cpes.
-main.cpes$CVE <- lapply(main.cpes$CPE, function(x) if (!is.na(x)) GroupAssignmentPackage::get.cve(x, cves) else NA)
+main.cpes$CVE <- lapply(main.cpes$cpe23, function(x) if (!is.na(x)) GroupAssignmentPackage::get.cve(x, cves) else NA)
 # Get score for cvss2 and cvss3
+main.cpes$num.cve <- lapply(main.cpes$CVE, function(x) nrow(x))
 main.cpes$score.cvss2 <- lapply(main.cpes$CVE, function(x) GroupAssignmentPackage::get.score(x, 2))
 main.cpes$score.cvss3 <- lapply(main.cpes$CVE, function(x) GroupAssignmentPackage::get.score(x, 3))
+
+#df$cpe23 <- as.character(df$cpe23)
+#main.cpes$cpe23 <- as.character(main.cpes$cpe23)
+df.cves <- dplyr::left_join(df, main.cpes, by = "cpe23")
+df.cves$CVE[df.cves$CVE=='NULL'] <- NA
+df.cves$num.cve[df.cves$num.cve=='NULL'] <- NA
+df.cves$num.cve <- as.integer(df.cves$num.cve)
+df.cves$score.cvss2[df.cves$score.cvss2=='NULL'] <- NA
+df.cves$score.cvss3[df.cves$score.cvss3=='NULL'] <- NA
+```
+
+```{r map_cves, echo=FALSE, cache=TRUE, warning = FALSE}
+m <- leaflet() %>%
+  addTiles() %>%
+  addCircles(lat=subset(df.cves,num.cve>0)$lat, lng=subset(df.cves,num.cve>0)$lon, color= "red")
+m
 ```
