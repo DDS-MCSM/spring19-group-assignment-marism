@@ -1,7 +1,7 @@
 ---
 title: "Untrusted Servers"
 author: "Martí Barri and Ismael López"
-date: "5/25/2019"
+date: "6/1/2019"
 output: html_document
 ---
 # Análisis de respuestas HTTP y de sus servidores
@@ -273,9 +273,11 @@ if (!file.exists(file.path(getwd(), "data", "cpes.rds"))) {
 List of most CPE mached
 ```{r kable_cpe, echo=FALSE, cache=TRUE}
 cpes.match <- plyr::count(unlist(df$cpe23))
+cpes.match[] <- lapply(cpes.match, function(x) if (is.factor(x)) as.character(x) else {x})
 cpes.match <- cpes.match[-which(is.na(cpes.match$x)), ] # Delete empty values
 cpes.match <- cpes.match[with(cpes.match, order(-freq)), ]
 names(cpes.match) <- c("CPE", "freq")
+main.cpes <- head(cpes.match, 50)
 row.names(cpes.match) <- NULL
 kable(head(cpes.match, 10)) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
@@ -285,22 +287,17 @@ kable(head(cpes.match, 10)) %>%
 Relación con CVE, para obtener la criticidad de las vulnerabilidades.
 
 ```{r cves, echo=FALSE, cache=TRUE}
-# if (!file.exists(file.path(getwd(), "data", "cves.rds"))) {
-#   library(net.security)
-#   #df$cpe22 <- mapply(x = df$vendor, y = df$version, FUN = function(x, y) GroupAssignmentPackage::get.cpe(x, y, 22))
-#   df$cpe23 <- mapply(x = df$vendor, y = df$version, FUN = function(x, y) GroupAssignmentPackage::get.cpe(x, y, 23))
-# } else {
-#   cves <- readRDS(file.path(getwd(), "data", "cves.rds"))
-#   #df$cpe22 <- mapply(x = df$vendor, y = df$version, FUN = function(x, y) GroupAssignmentPackage::get.cpe(x, y, 22, cpes))
-#   df$cpe23 <- mapply(x = df$vendor, y = df$version, FUN = function(x, y) GroupAssignmentPackage::get.cpe(x, y, 23, cpes))
-# }
-# net.security::DataSetUpdate(samples = T, use.remote = F)
+# Get cves list
+if (!file.exists(file.path(getwd(), "data", "cves.rds"))) {
+  library(net.security)
+  cves <- net.security::GetDataFrame("cves")
+} else {
+  cves <- readRDS(file.path(getwd(), "data", "cves.rds"))
+}
 
-#cpes <- net.security::GetDataFrame("cpes")
-#a <- cpes[grep("Apache/2.4.18", cpes$title), ]
-#cpes.apache <- cpes[grepl("apache", cpes$vendor), ]
-
-#cves <- net.security::GetDataFrame("cves")
-#cves.apache <- cves[grep("apache", cves$affects), ]
-#cves.nginx <- cves[grep("nginx", cves$affects), ]
+# Match only main cpes.
+main.cpes$CVE <- lapply(main.cpes$CPE, function(x) if (!is.na(x)) GroupAssignmentPackage::get.cve(x, cves) else NA)
+# Get score for cvss2 and cvss3
+main.cpes$score.cvss2 <- lapply(main.cpes$CVE, function(x) GroupAssignmentPackage::get.score(x, 2))
+main.cpes$score.cvss3 <- lapply(main.cpes$CVE, function(x) GroupAssignmentPackage::get.score(x, 3))
 ```
