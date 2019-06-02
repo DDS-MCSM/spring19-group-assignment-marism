@@ -416,14 +416,38 @@ head(wct, 10)
 ```
 
 Nos faltaría extraer de cada servidor, que criticidad tiene cada vulnerabilidad, para poder mostrar con mas fidelidad los resultados. 
-
-
+```{r Vulnerabilidad_criticidad, echo = FALSE, cache = TRUE}
+#Crear un dataframe que tenga los siguientes datos: region, lon/lat, servidor, criticidad
+# Utlizar región y criticidad, para pintar el mapa
+```
 
 Normalizamos los resultado por el número de servidores que hay en cada región y sacamos el promedio de criticidad.
+```{r Vulnerabilidad_pais_promedio, echo = FALSE, cache = TRUE}
+#Crear un mapa con: región, lon/lat, criticidad_promedio
+# Utlizar región y criticidad_promedio para pintar el mapa obteniendo valores normalizados
+```
 
 
 
+Lo correlaciamos con los datos del PIB: 
+```{r Vulnerabilidad_PIB, echo = FALSE, cache = TRUE}
+#Crear un mapa con: region, criticidad_promedio, PIB
+#Utilizar los tres valores para mostrar los resultados
 
-Correlacionarlo con los datos del PIB, para llegar a sacar las conclusione que nos hemos 
+```
+
+
+##Conclusiones
+
+Revisando los resultados que hemos obtenidos de la muestra de datos, podemos llegar a decir: 
+
+-
+-
+-
+
+
+Dicho análisis únicamente se ha realizado con 5000 muestras y nos da una estimación de los resultados que podríamos llegar a obtener con el fichero entero. El cual no hemos procesado por la cantidad de información que contenía y la falta de tiempo.
+Para futuras versiones de este mismo análisis sería interesante, aumentar el número de muestras con el que hemos realizado el análisis y por otro lado, ejecutar el análisis con ficheros de diferentes días. De esta manera podriamos garantizar que los resultados obtenidos se aproximarían a la realidad.
+
 
 
