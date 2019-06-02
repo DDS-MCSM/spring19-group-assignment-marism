@@ -175,7 +175,12 @@ print(gg)
 Al ser una gráfica estática y de dispersión, nos permite hacernos idea de la geolocalización de estos servidores. Sin embargo hemos considerado oportuno introducir una nueva gráfica leaflet, que permita interactuar y realizar zoom, para tener mas detalle de los servidores y su ubicación:
 
 ```{r map_simple2, echo=FALSE, cache=TRUE, fig.align='center', warning = FALSE}
-m <- leaflet(df.raw.geo) %>% addTiles() %>% addCircles(lng = ~longitude, lat = ~latitude, color = "blue")
+pal <- colorFactor(
+  palette = c('blue'),
+  domain = c('Servidores http')
+)
+m <- leaflet(df.raw.geo) %>% addTiles() %>% addCircles(lng = ~longitude, lat = ~latitude, color = "blue")%>% 
+addLegend("bottomright", pal = pal, values = c('Servidores http'), title = "Geolocalización",opacity = 2)
 m
 ```
 
@@ -347,9 +352,17 @@ Mostramos los servidores, en su geolocalización mostrando únicamente aquellos 
 Contra más oscuro es el punto mayor citicidad tiene:
 
 ```{r map_cves, echo=FALSE, cache=TRUE, warning = FALSE}
+pal <- colorFactor(
+  palette = c('red'),
+  domain = c('Servidores con vulnerabilidades')
+)
+
 m <- leaflet() %>%
   addTiles() %>%
-  addCircles(lat=subset(df.cves,num.cve>0)$lat, lng=subset(df.cves,num.cve>0)$lon, color= "red")
+  addCircles(lat=subset(df.cves,num.cve>0)$lat, lng=subset(df.cves,num.cve>0)$lon, color= "red")%>%
+  addLegend("bottomright", pal = pal, values = c('Servidores con vulnerabilidades'), title = "Geolocalización", opacity = 1)
+
+
 m
 ```
 
@@ -385,7 +398,7 @@ latlong2map <- function(pointsDF, mapping) {
 # se puede contar cuantas veces aparece un pais con la funcion table()
 # Lo que hay que hacer es transformar la informaci?n de lat/long a nombre de pais
 
-zworld <- latlong2map(data.frame(x=df.cves$longitude, y=df.cves$latitude), "world")
+zworld <- latlong2map(data.frame(x=subset(df.cves,num.cve>0)$lon, y=subset(df.cves,num.cve>0)$lat), "world")
 # cuenta los puntos en un pais y lo convierte en data frame
 wct <- data.frame(table(zworld))
 # definimos los nombres de la variables
@@ -410,14 +423,26 @@ gg <- gg + theme(axis.title=element_blank(),
                                                fill="white"))
 print(gg)
 ```
+En el gráfico anterior estamos mostrando el numero de servidores con vulnerabilidades que tiene cada pais, pero estamos ponderando con el mismo valor cada vulnerabilidad. 
+
+Si mostramos el top 10 podemos apreciar que Estados Unidos encabeza el listado:
+
+```{r top10_infections, echo = FALSE, cache = TRUE}
+# for each wct$count, divide by sum, gives us proportion of the whole
+perc <- wct$count/sum(wct$count)
+# covert to a readable format, round it and create percent
+wct$perc <- round(perc, 4)*100
+# now order the highest percentages on top
+wct <- wct[with(wct, order(perc, decreasing=T)), ]
+# look at the top few entries.
+head(wct, 10)
+```
+
+Nos faltaría extraer de cada servidor, que criticidad tiene cada vulnerabilidad, para poder mostrar con mas fidelidad los restudos. 
 
 
-Normalizamos los resultado por el numero de servidores que hay en cada región: 
 
-
-
-
-
+Normalizamos los resultado por el número de servidores que hay en cada región: 
 
 
 
