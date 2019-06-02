@@ -283,7 +283,7 @@ get.cve <- function(cpe, cves = NULL) {
 }
 
 
-#' @title Return cpe22 or cpe23 from vendor and version
+#' @title Return an averaged score of cvss2 or cvss3
 #'
 #' @param df.cve data frame with list of CVEs
 #' @param cvss CVSS version. 2 or 3
@@ -300,6 +300,25 @@ get.score <- function(df.cve, cvss = 2) {
     score <- (sum(df.cve$cvss3.score) + sum(df.cve$cvss3.score.exploit) + sum(df.cve$cvss3.score.impact)) / nrow(df.cve)
   }
   return(score)
+}
+
+#' @title Return maxim score of cvss2 or cvss3
+#'
+#' @param df.cve data frame with list of CVEs
+#' @param cvss CVSS version. 2 or 3
+#'
+#' @return max.score
+#' @export
+get.score.max <- function(df.cve, cvss = 2) {
+  if (nrow(df.cve) == 0) {
+    return(0)
+  }
+  if (cvss == 2) {
+    max.score <- max(df.cve$cvss2.score)
+  } else if (cvss == 3) {
+    max.score <- max(df.cve$cvss3.score)
+  }
+  return(max.score)
 }
 
 #' @title Parsing headers of dataframe with data column encoded in base64
