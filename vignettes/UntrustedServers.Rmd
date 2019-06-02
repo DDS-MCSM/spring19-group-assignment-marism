@@ -1,8 +1,11 @@
 ---
 title: "Untrusted Servers"
 author: "Martí Barri and Ismael López"
-date: "6/1/2019"
-output: html_document
+date: "2/6/2019"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
 ---
 # Análisis de respuestas HTTP y de sus servidores
 
@@ -17,9 +20,10 @@ Adjuntamos el detalle de los enlaces:
 
 - [HTTP GET Responses](https://opendata.rapid7.com/sonar.http/)
 - [MaxMind IP Geolocation](https://dev.maxmind.com/geoip/geoip2/geolite2/)
-- [CPE]
-- [CVE]
-- [PIB]
+- [CPE](http://static.nvd.nist.gov/feeds/xml/cpe/dictionary/official-cpe-dictionary_v2.3.xml.gz)
+- [CVE MITRE](http://cve.mitre.org/data/downloads/index.html#download)
+- [CVE NIST](https://nvd.nist.gov/download.cfm)
+- [PIB](http://api.worldbank.org/v2/es/indicator/NY.GDP.MKTP.CD?downloadformat=csv)
 
 ## Objetivos 
 
@@ -437,7 +441,7 @@ Lo correlaciamos con los datos del PIB:
 ```
 
 
-##Conclusiones
+## Conclusiones
 
 Revisando los resultados que hemos obtenidos de la muestra de datos, podemos llegar a decir: 
 
