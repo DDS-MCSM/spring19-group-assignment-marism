@@ -16,7 +16,10 @@ Imports:
     plyr,
     dplyr,
     jsonlite,
-    net.security
+    net.security, 
+    RColorBrewer, 
+    maptools, 
+    maps
 Suggests: 
     knitr
 RoxygenNote: 6.1.1
