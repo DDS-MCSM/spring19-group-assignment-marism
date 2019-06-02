@@ -10,9 +10,9 @@ output:
 # Análisis de respuestas HTTP y de sus servidores
 
 ## Resumen
-Este informe se centra en realizar un estudio de los tipos de servidores que estan ofreciendo respuesta por protocolos no seguro.
+Este informe se centra en realizar un estudio de los tipos de servidores que estan ofreciendo respuesta por el puerto 80, el puerto web por defecto.
 
-En el transcurso del proyecto correlacionando distintos dataframe, se han obtenido datos valiosos para realizar el análisis como: geolocalización de cada uno de los servidores, versión de http con que se están comunicando, repuesta del servidor, tipo de servidor y su versión, cpe's, cve's, vulnerabilidades que les aplican y PIB de los países.
+En el transcurso del proyecto correlacionando distintos dataframes, se han obtenido datos valiosos para realizar el análisis como: geolocalización de cada uno de los servidores, versión de http con que se están comunicando, repuesta del servidor, tipo de servidor y su versión, cpe's, cve's, vulnerabilidades que les aplican y PIB de los países.
 
 Todos los datos han sido obtenidos de fuentes publicas y dicho análisis corresponde a la situación en que nos encontrabamos a día 22-04-2019. 
 
@@ -61,13 +61,13 @@ lapply(pkg, require, character.only = TRUE)
 
 ## Análisis
 
-Podemos descargar el fichero directamente de la web, muestras del puerto 80, no obstante este fichero descomprimido ocupa 170,70 GB y tardariamos horas en porderlo procesar integramente. Por ello hemos considerado trabajar con una parte significativa de las muestras.
+Podemos descargar el fichero directamente de la web, muestras del puerto 80, no obstante este fichero descomprimido ocupa *170,70 GB* y tardariamos horas en porderlo procesar integramente. Por ello hemos considerado trabajar con una parte significativa de las muestras.
 
 Para generar nuestro archivo de pruebas realizamos las siguentes comando:
 
 `user@linux$ head -n 5000  2019-04-22-1555944117-http_get_80.json > sample80_5kjson`
 
-Convertimos el fichero json en un dataframe, utilizando los siguiente comandos:
+Convertimos el fichero *json* en un dataframe, utilizando los siguiente comandos:
 
 ```{r sample, echo=TRUE, eval=FALSE}
 sample.file <- file.path(getwd(), "data", "sample80_5k.json")
@@ -78,7 +78,7 @@ saveRDS(object = df.raw, file = file.path(getwd(), "data", "df_http_get_80_raw_5
 
 Si observamos detenidamente el fichero que con las muestras, podemos apreciar que la columan "data" tiene los datos cifrados en base64 y que algunas columnas tienen el contedido duplicado o no nos aporta ninguna información relevante para el analisis que queremos realizar. 
 
-Por ello descartamos la informacion de la columna ("host", "vhost" y "path").
+Por ello descartamos la informacion de las columnas ("host", "vhost" y "path").
 
 La información del dataframe que nos interesa es la siguiente:
 
@@ -111,7 +111,7 @@ if (!file.exists(file.path(getwd(), "data", source.file.geo))) {
 }
 ```
 
-En el fichero Maxmind obtenemos geolocalización dado un rango de IP y por otro lado en el fichero de df_http_get_80_raw_5k.rds tenemos una única IP, el objetivo de este apartado es conseguir la geolocalización de esa IP comparandolo con el otro fichero.
+En el fichero Maxmind obtenemos geolocalización dado un rango de IP y por otro lado en el fichero de df_http_get_80_raw_5k.rds tenemos una única IP, el objetivo de este apartado es conseguir la geolocalización de esa IP comparandolo con el fichero de Maxmind.
 
 Para poder comparar en que rango de IP cae la IP del fichero de muestras y poder obtener su geolocalización, convertimos las IP en una variable numérica e iremos iterando hasta encontrar el rango en que IP en que la muestra sea mayor o igual al valor minimo y a su vez sea mas pequeña o igual al valor máximo.
 
@@ -130,9 +130,9 @@ rm(df.raw)
 str(df.raw.geo)
 ```
 
-Como se puede apreciar hemos juntado la parte del maxmaind que nos aporta datos de la geolocalizacion (latiude, longitude, accuracy_radius) al fichero de muestras que teneiamos incialmente.
+Como se puede apreciar hemos juntado la parte del maxmaind que nos aporta datos de la geolocalizacion (*latiude*, *longitude* y *accuracy_radius*) al fichero de muestras que teneiamos incialmente.
 
-Una vez aplicado todo el procesamiento y tratamiento de datos, es hora de mostrar los resultados. 
+Una vez aplicado todo el procesamiento y tratamiento de datos, es hora de mostrar los primeros resultados. 
 
 Cuando representamos esta información con un gráfico de dispersión, podemos apreciar que la distribución se asemeja notablemente al mapamundi:
 
@@ -152,8 +152,7 @@ print(gg)
 ```
 
 
-Sobre los resultados obtenidos, añadimos información sobre paises y sus fronteras para enriquecer el mapa y obtenemos la siguente resultado:
-
+Sobre los resultados obtenidos, añadimos información sobre paises y sus fronteras para enriquecer el mapa y obtenemos el siguente resultado:
 ```{r map_simple, echo=FALSE, cache=TRUE, fig.align='center', warning = FALSE}
 world <- map_data("world")
 # Quitamos el continete Antarctico ya que no aporta informaci?n
@@ -176,7 +175,7 @@ gg <- gg + theme(text=element_blank(),
 print(gg)
 ```
 
-Al ser una gráfica estática y de dispersión, nos permite hacernos idea de la geolocalización de estos servidores. Sin embargo hemos considerado oportuno introducir una nueva gráfica leaflet, que permita interactuar y realizar zoom, para tener mas detalle de los servidores y su ubicación:
+Al ser una gráfica estática y de dispersión, nos permite hacernos idea de la geolocalización de estos servidores. Sin embargo hemos considerado oportuno introducir una nueva gráfica leaflet, que permita interactuar y realizar zoom, para tener mas detalle de los servidores y su ubicación (solo disponible en la versión HTML):
 
 ```{r map_simple2, echo=FALSE, cache=TRUE, fig.align='center', warning = FALSE}
 pal <- colorFactor(
@@ -190,7 +189,7 @@ m
 
 ## Decodificación
 
-Después de ver la localización de los servidores, vamos a decodificar los datos y a parsear los headers para obtener información más detallada.
+Después de ver una primera localización de los servidores, vamos a decodificar los datos y a parsear los headers para obtener información más detallada.
 ```{r parse_headers, echo=FALSE, cache=TRUE}
 df <- GroupAssignmentPackage::parse.headers(df.raw.geo)
 ```
@@ -215,9 +214,7 @@ names(count.version) <- c("HTTP version", "freq")
 labels<-(as.integer(count.version$freq)/sum(as.integer(count.version$freq)))*100
 labels<-paste(labels, "%", sep="")
 pie(as.integer(count.version$freq), labels, col = colorRampPalette(brewer.pal(3,"Dark2"))(length(count.version$freq)), main = "HTTP versión")
-
 legend("topleft",  as.vector(count.version$`HTTP version`), cex=0.9, bty="n", fill=colorRampPalette(brewer.pal(3,"Dark2"))(length(count.version$freq)))
-
 ```
 Obtenemos su geolocalización:
 
@@ -239,12 +236,8 @@ names(ordered.status) <- c("HTTP status code", "freq")
 row.names(ordered.status) <- NULL
 label<-paste((ordered.status$freq/sum(ordered.status$freq))*100,"%","")
 pie(as.integer(ordered.status$freq), label[which(ordered.status$freq > 50)], col = colorRampPalette(brewer.pal(8,"Dark2"))(length(ordered.status$freq)), main = "HTTP status code")
-
 legend("topleft",  as.vector(ordered.status$`HTTP status code`)[which(ordered.status$freq > 50)], cex=0.9, bty="n",
 fill=colorRampPalette(brewer.pal(8,"Dark2"))(length(ordered.status$`HTTP status code`)))
-
-
-
 ```
 
 
@@ -271,16 +264,30 @@ kable(head(ordered.vendors, 11)) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
 
-Mostramos la geolocalización por tipología de servidor:
+Un dato interesante encontrado, es que filtrando los *vendors* segun la versión de HTTP usada, nos mustra que el servidor **AkamaiGHost** usa el protocolo HTTP/1.0 en el 100% de las muestras analizadas. 932 respuestas.
+
+Investigando encontramos que se trata de un servidor de geolocalización caché, para proporcionar respuestas más rápidas en función de la ubicación. La mayoría de los servidores obtenidos utilizando la versión HTTP/1.0 tienen una función similar, utilizado por *robots* o por servidores de caché.
+La proporción de servidores web corrientes que utilizan HTTP/1.0 es casi despreciable.
+```{r vendors_http1.0, echo=FALSE, cache=TRUE, warning = FALSE}
+vendors.http1.0 <- df$vendor[which(df$http.version == "HTTP/1.0")]
+vendors.http1.0 <- plyr::count(vendors.http1.0)
+vendors.http1.0 <- vendors.http1.0[with(vendors.http1.0, order(-freq)), ]
+names(vendors.http1.0) <- c("vendor using HTTP/1.0", "freq")
+row.names(vendors.http1.0) <- NULL
+labels <- paste(sprintf("%.2f",(vendors.http1.0$freq/sum(vendors.http1.0$freq))*100),"%","")
+labels <- vendors.http1.0$freq
+pie(as.integer(vendors.http1.0$freq), labels[which(vendors.http1.0$freq > 15)], col = colorRampPalette(brewer.pal(8,"Dark2"))(length(vendors.http1.0$freq)), main = "Vendors with HTTP/1.0 version")
+legend("bottomleft",  as.vector(vendors.http1.0$`vendor using HTTP/1.0`)[which(vendors.http1.0$freq > 5)], cex=0.9, bty="n", fill=colorRampPalette(brewer.pal(8,"Dark2"))(length(vendors.http1.0$`vendor using HTTP/1.0`)))
+
+```
+
+Mostramos la geolocalización por tipología de servidor de los 4 tipos principales:
 
 ```{r vendors2, echo=FALSE, cache=TRUE, warning = FALSE}
 pal <- colorFactor(
   palette = c('orange', 'red', 'blue', 'green'),
   domain = c('Apache', 'Microsoft-IIS', 'nginx', 'AkamaiGHost')
 )
-
-
-
 m <- leaflet() %>%
   addTiles() %>%
   addCircles(lat=subset(df, vendor=='Apache')$lat, lng=subset(df,vendor=='Apache')$lon, color= "red") %>%
@@ -309,7 +316,7 @@ if (!file.exists(file.path(getwd(), "data", "cpes.rds"))) {
 }
 ```
 
-Mostramos el listados de los CPE para los cuales hemos encontrado coincidencia:
+Mostramos un listado del top 10 CPE para los cuales hemos encontrado coincidencia:
 
 ```{r kable_cpe, echo=FALSE, cache=TRUE}
 cpes.match <- plyr::count(unlist(df$cpe23))
@@ -323,7 +330,11 @@ kable(head(cpes.match, 10)) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 ```
 
-Relación con CVE, para obtener la criticidad de las vulnerabilidades.
+## Relación con CVE
+
+A partir de los CPEs encontrados, podemos hacer una relación con CVEs, para obtener las vulnerabilidades y su criticidad.
+
+Debido al coste computacional de la búsqueda de *strings*, hemos guardado un RDS con la relación de los 121 CPE encontrados. Si no disponemos del fichero *"cpes.match.cves.rds"* limitamos nuestra muestra a los 50 CPE principales de nuestro conjunto de datos.
 
 ```{r cves, echo=FALSE, cache=TRUE}
 # Get cves list
@@ -335,7 +346,11 @@ if (!file.exists(file.path(getwd(), "data", "cves.rds"))) {
 }
 
 # Match only main cpes.
-main.cpes$CVE <- lapply(main.cpes$cpe23, function(x) if (!is.na(x)) GroupAssignmentPackage::get.cve(x, cves) else NA)
+if (!file.exists(file.path(getwd(), "data", "cpes.match.cves.rds"))) {
+  main.cpes$CVE <- lapply(main.cpes$cpe23, function(x) if (!is.na(x)) GroupAssignmentPackage::get.cve(x, cves) else NA)
+} else {
+  main.cpes <- readRDS(file.path(getwd(), "data", "cpes.match.cves.rds"))
+}
 # Get score for cvss2 and cvss3
 main.cpes$num.cve <- lapply(main.cpes$CVE, function(x) nrow(x))
 main.cpes$score.cvss2 <- lapply(main.cpes$CVE, function(x) GroupAssignmentPackage::get.score(x, 2))
@@ -343,7 +358,7 @@ main.cpes$score.cvss3 <- lapply(main.cpes$CVE, function(x) GroupAssignmentPackag
 
 #df$cpe23 <- as.character(df$cpe23)
 #main.cpes$cpe23 <- as.character(main.cpes$cpe23)
-df.cves <- dplyr::left_join(df, main.cpes, by = "cpe23")
+df.cves <- dplyr::inner_join(df, main.cpes, by = "cpe23")
 df.cves$CVE[df.cves$CVE=='NULL'] <- NA
 df.cves$num.cve[df.cves$num.cve=='NULL'] <- NA
 df.cves$num.cve <- as.integer(df.cves$num.cve)
@@ -351,33 +366,33 @@ df.cves$score.cvss2[df.cves$score.cvss2=='NULL'] <- NA
 df.cves$score.cvss3[df.cves$score.cvss3=='NULL'] <- NA
 ```
 
-Mostramos los servidores, en su geolocalización mostrando únicamente aquellos que hemos encontrado alguna valor de criticidad.
-
-Contra más oscuro es el punto mayor citicidad tiene:
+Mostramos los servidores, en su geolocalización mostrando el número de CVEs que tiene cada servidor.
 
 ```{r map_cves, echo=FALSE, cache=TRUE, warning = FALSE}
-pal <- colorFactor(
-  palette = c('red'),
-  domain = c('Servidores con vulnerabilidades')
+pal <- colorNumeric(
+  palette = c("white", "forestgreen", "gold", "red"),
+  domain = plyr::count(df.cves$num.cve)$x
 )
+labels <- sprintf(
+  "<strong>%s</strong>",
+  df.cves$num.cve
+) %>% lapply(htmltools::HTML)
 
 m <- leaflet() %>%
   addTiles() %>%
-  addCircles(lat=subset(df.cves,num.cve>0)$lat, lng=subset(df.cves,num.cve>0)$lon, color= "red")%>%
-  addLegend("bottomright", pal = pal, values = c('Servidores con vulnerabilidades'), title = "Geolocalización", opacity = 1)
-
-
+  addCircles(lat=subset(df.cves,num.cve>0)$lat, lng=subset(df.cves,num.cve>0)$lon, color=pal(df.cves$num.cve), label= labels) %>%
+  addLegend("bottomright", pal = pal, values = df.cves$num.cve, title = "Número de CVE", opacity = 1)
 m
 ```
 
-Miramos los resultado a nivel de pais, ya que con el anterior gráfico es difícil de llegar a comprender que paises tienen mas vulnerabilidades, que otros.
+Miramos los resultado a nivel de pais, ya que con el anterior gráfico es difícil de llegar a comprender que paises tienen mas vulnerabilidades que otros.
 
 Para ello usaremos un mapa de tipo ***choropleth***, que básicamente significa pintar los paises con colores.
 
 ```{r map_choropleth, echo = FALSE, cache = TRUE, fig.align = 'center'}
 # Esta funcion devuelve un vector con los nombres de los paises, de esta forma
 # se puede contar cuantas veces aparece un pais con la funcion table()
-# Lo que hay que hacer es transformar la informaci?n de lat/long a nombre de pais
+# Lo que hay que hacer es transformar la información de lat/long a nombre de pais
 
 zworld <- latlong2map(data.frame(x=subset(df.cves,num.cve>0)$lon, y=subset(df.cves,num.cve>0)$lat), "world")
 # cuenta los puntos en un pais y lo convierte en data frame
@@ -445,13 +460,9 @@ Lo correlaciamos con los datos del PIB:
 
 Revisando los resultados que hemos obtenidos de la muestra de datos, podemos llegar a decir: 
 
--
--
--
+- Dicho análisis únicamente se ha realizado con 5000 muestras y nos da una estimación de los resultados que podríamos llegar a obtener con el fichero entero. El cual no hemos procesado por la cantidad de información que contenía y la falta de tiempo y recursos.
+- Para futuras versiones de este mismo análisis sería interesante, aumentar el número de muestras con el que hemos realizado el análisis y por otro lado, ejecutar el análisis con ficheros de diferentes días. De esta manera podriamos garantizar que los resultados obtenidos se aproximarían a la realidad.
 
-
-Dicho análisis únicamente se ha realizado con 5000 muestras y nos da una estimación de los resultados que podríamos llegar a obtener con el fichero entero. El cual no hemos procesado por la cantidad de información que contenía y la falta de tiempo.
-Para futuras versiones de este mismo análisis sería interesante, aumentar el número de muestras con el que hemos realizado el análisis y por otro lado, ejecutar el análisis con ficheros de diferentes días. De esta manera podriamos garantizar que los resultados obtenidos se aproximarían a la realidad.
 
 
 
