@@ -43,7 +43,7 @@ verbose <- FALSE
 
 ```{r load_packages, echo = FALSE, cache = TRUE, message = FALSE, include = FALSE}
 # Required Packages
-pkg <- c("R.utils", "iptools", "parallel", "dplyr", "jsonlite", "GroupAssignmentPackage", "mapproj", "kableExtra", "ggplot2", "leaflet", "net.security", "RColorBrewer")
+pkg <- c("R.utils", "iptools", "parallel", "dplyr", "jsonlite", "GroupAssignmentPackage", "mapproj", "kableExtra", "ggplot2", "leaflet", "net.security", "RColorBrewer", "maptools", "maps")
 
 # Instalar paquetes que no esten instalados
 new.pkg <- pkg[!(pkg %in% installed.packages())]
@@ -371,29 +371,6 @@ Miramos los resultado a nivel de pais, ya que con el anterior gráfico es difíc
 Para ello usaremos un mapa de tipo ***choropleth***, que básicamente significa pintar los paises con colores.
 
 ```{r map_choropleth, echo = FALSE, cache = TRUE, fig.align = 'center'}
-library(maps)
-library(maptools)
-# peque?a modificaci?n de la version de (@rweald)
-# https://gist.github.com/rweald/4720788
-latlong2map <- function(pointsDF, mapping) {
-  # load up the map data
-  local.map <- map(mapping, fill=TRUE, col="transparent", plot=FALSE)
-  # pull out the IDs from the name
-  IDs <- sapply(strsplit(local.map$names, ":"), function(x) x[1])
-  # Prepare SpatialPolygons object 
-  maps_sp <- map2SpatialPolygons(local.map, IDs=IDs,
-                                 proj4string=CRS("+proj=longlat +datum=wgs84"))
-  # Convert pointsDF to a SpatialPoints object
-  pointsSP <- SpatialPoints(pointsDF,
-                            proj4string=CRS("+proj=longlat +datum=wgs84"))
-  # Use 'over' to get _indices_ of the Polygons object containing each point
-  indices <- over(pointsSP, maps_sp)
-  # Return the names of the Polygons object containing each point
-  mapNames <- sapply(maps_sp@polygons, function(x) x@ID)
-  # now return a vector of names that match the points
-  mapNames[indices]
-}
-
 # Esta funcion devuelve un vector con los nombres de los paises, de esta forma
 # se puede contar cuantas veces aparece un pais con la funcion table()
 # Lo que hay que hacer es transformar la informaci?n de lat/long a nombre de pais
@@ -438,15 +415,15 @@ wct <- wct[with(wct, order(perc, decreasing=T)), ]
 head(wct, 10)
 ```
 
-Nos faltaría extraer de cada servidor, que criticidad tiene cada vulnerabilidad, para poder mostrar con mas fidelidad los restudos. 
+Nos faltaría extraer de cada servidor, que criticidad tiene cada vulnerabilidad, para poder mostrar con mas fidelidad los resultados. 
 
 
 
-Normalizamos los resultado por el número de servidores que hay en cada región: 
+Normalizamos los resultado por el número de servidores que hay en cada región y sacamos el promedio de criticidad.
 
 
 
 
-Lo correlacionamos con los datos del PIB:
+Correlacionarlo con los datos del PIB, para llegar a sacar las conclusione que nos hemos 
 
 

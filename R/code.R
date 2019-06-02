@@ -377,6 +377,30 @@ http.responses <- function(port=80, rows=50, verbose=TRUE) {
   return(df)
 }
 
+#' @title Generación de mapa por pais
+#' @description Funcion que te calcula el pais dada la long/lat
+#' @param pointsDF Dataframe donde donde tenemos la geolocalización
+#' @param mapping Tipo de mapa que queremos pintar "world"
+#' @export
+latlong2map <- function(pointsDF, mapping) {
+  # load up the map data
+  local.map <- map(mapping, fill=TRUE, col="transparent", plot=FALSE)
+  # pull out the IDs from the name
+  IDs <- sapply(strsplit(local.map$names, ":"), function(x) x[1])
+  # Prepare SpatialPolygons object
+  maps_sp <- map2SpatialPolygons(local.map, IDs=IDs,
+                                 proj4string=CRS("+proj=longlat +datum=wgs84"))
+  # Convert pointsDF to a SpatialPoints object
+  pointsSP <- SpatialPoints(pointsDF,
+                            proj4string=CRS("+proj=longlat +datum=wgs84"))
+  # Use 'over' to get _indices_ of the Polygons object containing each point
+  indices <- over(pointsSP, maps_sp)
+  # Return the names of the Polygons object containing each point
+  mapNames <- sapply(maps_sp@polygons, function(x) x@ID)
+  # now return a vector of names that match the points
+  mapNames[indices]
+}
+
 
 #' @title Funcion general
 #' @description Función que ejecuta ordenadamente todas las funciones decladaras, y simula el comportamiento del codigo facilitado en la práctica. Utiliza los datos de maxmind para geolocalizar IPs, pero a parte del archivo con datos sobre conexiones tcp21, también acepta cualquier archivo de https://opendata.rapid7.com/sonar.tcp
