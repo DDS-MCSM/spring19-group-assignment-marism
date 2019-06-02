@@ -355,6 +355,8 @@ if (!file.exists(file.path(getwd(), "data", "cpes.match.cves.rds"))) {
 main.cpes$num.cve <- lapply(main.cpes$CVE, function(x) nrow(x))
 main.cpes$score.cvss2 <- lapply(main.cpes$CVE, function(x) GroupAssignmentPackage::get.score(x, 2))
 main.cpes$score.cvss3 <- lapply(main.cpes$CVE, function(x) GroupAssignmentPackage::get.score(x, 3))
+main.cpes$max.score.cvss2 <- lapply(main.cpes$CVE, function(x) GroupAssignmentPackage::get.score.max(x, 2))
+main.cpes$max.score.cvss3 <- lapply(main.cpes$CVE, function(x) GroupAssignmentPackage::get.score.max(x, 3))
 
 #df$cpe23 <- as.character(df$cpe23)
 #main.cpes$cpe23 <- as.character(main.cpes$cpe23)
@@ -364,6 +366,8 @@ df.cves$num.cve[df.cves$num.cve=='NULL'] <- NA
 df.cves$num.cve <- as.integer(df.cves$num.cve)
 df.cves$score.cvss2[df.cves$score.cvss2=='NULL'] <- NA
 df.cves$score.cvss3[df.cves$score.cvss3=='NULL'] <- NA
+df.cves$max.score.cvss2[df.cves$max.score.cvss2=='NULL'] <- NA
+df.cves$max.score.cvss3[df.cves$max.score.cvss3=='NULL'] <- NA
 ```
 
 Mostramos los servidores, en su geolocalización mostrando el número de CVEs que tiene cada servidor.
@@ -382,6 +386,25 @@ m <- leaflet() %>%
   addTiles() %>%
   addCircles(lat=subset(df.cves,num.cve>0)$lat, lng=subset(df.cves,num.cve>0)$lon, color=pal(df.cves$num.cve), label= labels) %>%
   addLegend("bottomright", pal = pal, values = df.cves$num.cve, title = "Número de CVE", opacity = 1)
+m
+```
+
+El número de CVE que tiene un servidor no quiere decir que sea crítico, ahora mostramos los servidores con su mayor puntuaje de cvss2:
+
+```{r map_maxscore, echo=FALSE, cache=TRUE, warning = FALSE}
+pal <- colorNumeric(
+  palette = c("white", "forestgreen", "gold", "red"),
+  domain = plyr::count(unlist(df.cves$max.score.cvss2))$x
+)
+labels <- sprintf(
+  "<strong>%s</strong>",
+  unlist(df.cves$max.score.cvss2)
+) %>% lapply(htmltools::HTML)
+
+m <- leaflet() %>%
+  addTiles() %>%
+  addCircles(lat=subset(df.cves,num.cve>0)$lat, lng=subset(df.cves,num.cve>0)$lon, color=pal(unlist(df.cves$max.score.cvss2)), label= labels) %>%
+  addLegend("bottomright", pal = pal, values = unlist(df.cves$max.score.cvss2), title = "Criticidad de CVE", opacity = 1)
 m
 ```
 
@@ -409,7 +432,7 @@ gg <- gg + geom_path(colour="#666666") + geom_polygon()
 gg <- gg + coord_map("mercator", xlim=c(-200, 200), ylim=c(-60,200))
 gg <- gg + scale_fill_gradient2(low="#FFFFFF", high="#4086AA", 
                                 midpoint=median(za.choro$count),
-                                name="Vulnerabilidad")
+                                name="Número de CPE con almenos un CVE")
 # Eliminamos texto y le damos un poco de color
 gg <- gg + theme(axis.title=element_blank(), 
                  axis.text=element_blank(),
